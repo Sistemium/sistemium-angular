@@ -7,27 +7,27 @@
   // before all nested files are concatenated by Gulp
 
   // Config
-  angular.module('sistemiumAngular.config', [])
-    .value('sistemiumAngular.config', {
+  angular.module('sistemium.config', [])
+    .value('sistemium.config', {
       debug: true
     });
 
   // Modules
-  angular.module('sistemiumAngular.directives', []);
-  angular.module('sistemiumAngular.filters', []);
-  angular.module('sistemiumAngular.services', []);
-  angular.module('sistemiumAngular.dependencies', [
+  angular.module('sistemium.directives', []);
+  angular.module('sistemium.filters', []);
+  angular.module('sistemium.services', []);
+  angular.module('sistemium.dependencies', [
     'ui.bootstrap',
     'ngTable',
     'toastr'
   ]);
-  angular.module('sistemiumAngular',
+  angular.module('sistemium',
     [
-      'sistemiumAngular.dependencies',
-      'sistemiumAngular.config',
-      'sistemiumAngular.directives',
-      'sistemiumAngular.filters',
-      'sistemiumAngular.services'
+      'sistemium.dependencies',
+      'sistemium.config',
+      'sistemium.directives',
+      'sistemium.filters',
+      'sistemium.services'
     ]);
 
 })(angular);

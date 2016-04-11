@@ -1,8 +1,6 @@
-'use strict';
-
 (function () {
 
-  angular.module('sistemiumAngular.services')
+  angular.module('sistemium.services')
     .factory('saFormlyConfigService', function () {
       var formlyConfig = {};
 

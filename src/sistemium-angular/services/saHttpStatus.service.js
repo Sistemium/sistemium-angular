@@ -5,7 +5,7 @@
  *  httpStatusService.getStatusCodeText(httpStatusCode);
  */
 (function() {
-  angular.module('sistemiumAngular.services')
+  angular.module('sistemium.services')
     .factory('saHttpStatusService',
       function factory() {
         return {

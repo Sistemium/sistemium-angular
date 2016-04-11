@@ -1,6 +1,6 @@
 (function () {
 
-  angular.module('sistemiumAngular.services')
+  angular.module('sistemium.services')
     .service('saErrors', function () {
 
       var errors = [];

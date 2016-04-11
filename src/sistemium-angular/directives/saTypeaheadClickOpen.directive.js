@@ -1,6 +1,6 @@
 (function () {
 
-  angular.module('sistemiumAngular')
+  angular.module('sistemium')
     .directive('saTypeaheadClickOpen', function ($timeout) {
       return {
         require: 'ngModel',

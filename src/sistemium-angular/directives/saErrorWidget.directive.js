@@ -1,6 +1,6 @@
 (function () {
 
-  angular.module('sistemiumAngular.directives')
+  angular.module('sistemium.directives')
     .directive('saErrorWidget', function () {
 
       return {

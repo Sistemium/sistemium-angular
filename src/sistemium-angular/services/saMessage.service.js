@@ -10,9 +10,8 @@
  * Feel free to be happy and code some awesome stuff!
  */
 (function () {
-  'use strict';
 
-  angular.module('sistemiumAngular.services')
+  angular.module('sistemium.services')
     .factory('saMessageService', function factory(toastr) {
       var service = {};
 
