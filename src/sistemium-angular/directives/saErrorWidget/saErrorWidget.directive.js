@@ -12,9 +12,9 @@
         '</div>',
         controllerAs: 'dm',
 
-        controller: function (Errors) {
+        controller: function (saErrors) {
           var dm = this;
-          dm.errors =  Errors.errors;
+          dm.errors =  saErrors.errors;
           dm.closeError = function (index) {
             dm.errors.splice(index, 1);
           };
