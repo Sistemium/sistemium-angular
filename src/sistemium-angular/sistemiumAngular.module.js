@@ -13,12 +13,14 @@
     });
 
   // Modules
-  angular.module('sistemiumAngular.dependencies', [
-    'ui.bootstrap'
-  ]);
   angular.module('sistemiumAngular.directives', []);
   angular.module('sistemiumAngular.filters', []);
   angular.module('sistemiumAngular.services', []);
+  angular.module('sistemiumAngular.dependencies', [
+    'ui.bootstrap',
+    'ngTable',
+    'toastr'
+  ]);
   angular.module('sistemiumAngular',
     [
       'sistemiumAngular.dependencies',
