@@ -1,0 +1,29 @@
+{
+  "generator-angularjs-library": {
+    "props": {
+      "author": {
+        "name": "Albert Kovalevskij",
+        "email": "kovalevskij.albert@gmail.com"
+      },
+      "libraryName": {
+        "original": "sistemium-angular",
+        "camelized": "sistemiumAngular",
+        "dasherized": "sistemium-angular",
+        "slugified": "sistemium-angular",
+        "parts": [
+          "sistemium",
+          "angular"
+        ]
+      },
+      "includeModuleDirectives": true,
+      "includeModuleFilters": true,
+      "includeModuleServices": true,
+      "includeAngularModuleResource": false,
+      "includeAngularModuleCookies": false,
+      "includeAngularModuleSanitize": false,
+      "librarySrcDirectory": "src/sistemium-angular",
+      "libraryUnitTestDirectory": "test/unit/sistemium-angular",
+      "libraryUnitE2eDirectory": "test/e2e/sistemium-angular"
+    }
+  }
+}
