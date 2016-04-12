@@ -20,9 +20,9 @@
   angular.module('sistemium.dependencies',
     [
       'ui.bootstrap',
-      'ngTable',
       'toastr',
-      'jsData'
+      'ngTable',
+      'js-data'
     ]
   );
   angular.module('sistemium',
@@ -31,7 +31,8 @@
       'sistemium.config',
       'sistemium.directives',
       'sistemium.filters',
-      'sistemium.services'
+      'sistemium.services',
+      'sistemium.models'
     ]);
 
 })(angular);
