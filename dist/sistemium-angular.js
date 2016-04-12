@@ -137,6 +137,61 @@
 
 (function () {
 
+  angular.module('sistemium.models')
+    //common configuration which can be overrided in projects where sistemium-angular injected
+    .config(function (DSProvider) {
+
+      angular.extend(DSProvider.defaults, {
+        beforeInject: function (resource, instance) {
+          if (!instance.id) {
+            instance.id = uuid.v4();
+          }
+        },
+        beforeCreate: function (resource, instance, cb) {
+          if (!instance.id) {
+            instance.id = uuid.v4();
+          }
+          cb(null, instance);
+        }
+      });
+
+    })
+
+    //this is common configuration for http adapter, basePath
+    //should be set in the project where sistemium-angular injected
+    .config(function (DSHttpAdapterProvider) {
+
+      angular.extend(DSHttpAdapterProvider.defaults, {
+
+        httpConfig: {
+          headers: {
+            'X-Return-Post': 'true',
+            'authorization': window.localStorage.getItem('authorization'),
+            'X-Page-Size': 300
+          }
+        },
+
+        queryTransform: function queryTransform(resourceConfig, params) {
+
+          var res = {};
+          if (params.offset) {
+            res['x-start-page:'] = Math.ceil(params.offset / params.limit);
+          }
+          if (params.limit) {
+            res['x-page-size:'] = params.limit;
+          }
+
+          delete params.limit;
+          delete params.offset;
+          return angular.extend(res, params);
+        }
+      });
+    });
+
+}());
+
+(function () {
+
   angular.module('sistemium.services')
     .service('saErrors', function () {
 
@@ -739,57 +794,81 @@
 
 }());
 
-(function () {
+angular.module('sistemium.services')
+  .service('saSchema', function (DS) {
 
-  angular.module('sistemium.models')
-    //common configuration which can be overrided in projects where sistemium-angular injected
-    .config(function (DSProvider) {
+    var models = {};
 
-      angular.extend(DSProvider.defaults, {
-        beforeInject: function (resource, instance) {
-          if (!instance.id) {
-            instance.id = uuid.v4();
-          }
-        },
-        beforeCreate: function (resource, instance, cb) {
-          if (!instance.id) {
-            instance.id = uuid.v4();
-          }
-          cb(null, instance);
-        }
-      });
+    var aggregate = function (field) {
 
-    })
+      return {
 
-    //this is common configuration for http adapter, basePath
-    //should be set in the project where sistemium-angular injected
-    .config(function (DSHttpAdapterProvider) {
-
-      angular.extend(DSHttpAdapterProvider.defaults, {
-
-        httpConfig: {
-          headers: {
-            'X-Return-Post': 'true',
-            'authorization': window.localStorage.getItem('authorization'),
-            'X-Page-Size': 300
-          }
+        sumFn: function (items) {
+          return _.reduce(items, function (sum, item) {
+            return sum + item [field]();
+          }, 0);
         },
 
-        queryTransform: function queryTransform(resourceConfig, params) {
+        sum: function (items) {
+          return _.reduce(items, function (sum, item) {
+            return sum + item [field];
+          }, 0);
+        },
 
-          var res = {};
-          if (params.offset) {
-            res['x-start-page:'] = Math.ceil(params.offset / params.limit);
-          }
-          if (params.limit) {
-            res['x-page-size:'] = params.limit;
-          }
-
-          delete params.limit;
-          delete params.offset;
-          return angular.extend(res, params);
+        custom: function (items, fn, starter) {
+          return _.reduce(items, function (res, item) {
+            return fn (res, item [field] ());
+          },starter);
         }
-      });
-    });
 
-}());
+      };
+
+    };
+
+    var aggregator = function (names, type) {
+
+      return function (owner, items) {
+
+        var res = {};
+
+        _.each(names, function (name) {
+
+          res [name] = function () {
+            return aggregate(name) [type] (owner[items]);
+          };
+
+        });
+
+        return res;
+      };
+
+    };
+
+    var schema = {
+
+      register: function (def) {
+
+        var resource = (models [def.name] = DS.defineResource(def));
+
+        if (def.methods) {
+          resource.agg = aggregator (Object.keys(def.methods), 'sumFn');
+        }
+
+        return resource;
+      },
+
+      models: function () {
+        return models;
+      },
+
+      model: function (name) {
+        return models [name];
+      },
+
+      aggregate: aggregate
+
+    };
+
+    return schema;
+
+  });
