@@ -16,11 +16,15 @@
   angular.module('sistemium.directives', []);
   angular.module('sistemium.filters', []);
   angular.module('sistemium.services', []);
-  angular.module('sistemium.dependencies', [
-    'ui.bootstrap',
-    'ngTable',
-    'toastr'
-  ]);
+  angular.module('sistemium.models', []);
+  angular.module('sistemium.dependencies',
+    [
+      'ui.bootstrap',
+      'ngTable',
+      'toastr',
+      'jsData'
+    ]
+  );
   angular.module('sistemium',
     [
       'sistemium.dependencies',
