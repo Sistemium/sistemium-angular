@@ -19,7 +19,6 @@
   angular.module('sistemium.models', []);
   angular.module('sistemium.dependencies',
     [
-      'ui.bootstrap',
       'toastr',
       'ngTable',
       'js-data'

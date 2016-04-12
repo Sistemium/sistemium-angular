@@ -33,7 +33,6 @@ describe('', function () {
   });
 
   it('should load injected dependencies', function () {
-    expect(hasDepModule('ui.bootstrap')).to.be.ok;
     expect(hasDepModule('toastr')).to.be.ok;
     expect(hasDepModule('ngTable')).to.be.ok;
     expect(hasDepModule('js-data')).to.be.ok;
