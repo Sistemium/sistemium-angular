@@ -17,21 +17,19 @@
   angular.module('sistemium.filters', []);
   angular.module('sistemium.services', []);
   angular.module('sistemium.models', []);
-  angular.module('sistemium.dependencies',
-    [
-      'toastr',
-      'ngTable',
-      'js-data'
-    ]
-  );
-  angular.module('sistemium',
-    [
-      'sistemium.dependencies',
-      'sistemium.config',
-      'sistemium.directives',
-      'sistemium.filters',
-      'sistemium.services',
-      'sistemium.models'
-    ]);
+  angular.module('sistemium.dependencies', [
+    'toastr',
+    'ngTable',
+    'js-data',
+    'ui.router.stateHelper'
+  ]);
+  angular.module('sistemium', [
+    'sistemium.dependencies',
+    'sistemium.config',
+    'sistemium.directives',
+    'sistemium.filters',
+    'sistemium.services',
+    'sistemium.models'
+  ]);
 
 })(angular);

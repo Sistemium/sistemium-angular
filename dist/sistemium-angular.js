@@ -17,76 +17,22 @@
   angular.module('sistemium.filters', []);
   angular.module('sistemium.services', []);
   angular.module('sistemium.models', []);
-  angular.module('sistemium.dependencies',
-    [
-      'toastr',
-      'ngTable',
-      'js-data'
-    ]
-  );
-  angular.module('sistemium',
-    [
-      'sistemium.dependencies',
-      'sistemium.config',
-      'sistemium.directives',
-      'sistemium.filters',
-      'sistemium.services',
-      'sistemium.models'
-    ]);
+  angular.module('sistemium.dependencies', [
+    'toastr',
+    'ngTable',
+    'js-data',
+    'ui.router.stateHelper'
+  ]);
+  angular.module('sistemium', [
+    'sistemium.dependencies',
+    'sistemium.config',
+    'sistemium.directives',
+    'sistemium.filters',
+    'sistemium.services',
+    'sistemium.models'
+  ]);
 
 })(angular);
-
-(function() {
-
-  function config(toastrConfig) {
-
-    angular.extend (toastrConfig,{
-      allowHtml: true,
-      timeOut: 3000,
-      positionClass: 'toast-top-right',
-      preventDuplicates: false,
-      progressBar: false,
-      iconClasses: {
-        error: 'alert alert-danger',
-        info: 'alert alert-info',
-        success: 'alert alert-success',
-        warning: 'alert alert-warning'
-      }
-    });
-
-  }
-
-  angular
-    .module('sistemium.dependencies')
-    .config(config);
-
-})();
-
-(function () {
-
-  angular.module('sistemium')
-    .directive('saTypeaheadClickOpen', function ($timeout) {
-      return {
-        require: 'ngModel',
-        link: function($scope, elem) {
-          var triggerFunc = function() {
-            var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-            if (prev) {
-              ctrl.$setViewValue('');
-              $timeout(function() {
-                ctrl.$setViewValue(prev);
-              });
-            } else {
-              ctrl.$setViewValue(' ');
-            }
-          };
-          elem.bind('click', triggerFunc);
-        }
-      };
-    });
-
-}());
 
 (function () {
 
@@ -139,6 +85,58 @@
           return angular.extend(res, params);
         }
       });
+    });
+
+}());
+
+(function() {
+
+  function config(toastrConfig) {
+
+    angular.extend (toastrConfig,{
+      allowHtml: true,
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: false,
+      progressBar: false,
+      iconClasses: {
+        error: 'alert alert-danger',
+        info: 'alert alert-info',
+        success: 'alert alert-success',
+        warning: 'alert alert-warning'
+      }
+    });
+
+  }
+
+  angular
+    .module('sistemium.dependencies')
+    .config(config);
+
+})();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saTypeaheadClickOpen', function ($timeout) {
+      return {
+        require: 'ngModel',
+        link: function($scope, elem) {
+          var triggerFunc = function() {
+            var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+            if (prev) {
+              ctrl.$setViewValue('');
+              $timeout(function() {
+                ctrl.$setViewValue(prev);
+              });
+            } else {
+              ctrl.$setViewValue(' ');
+            }
+          };
+          elem.bind('click', triggerFunc);
+        }
+      };
     });
 
 }());
