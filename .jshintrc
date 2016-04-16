@@ -58,6 +58,7 @@
     "angular": false,
     "$": false,
     "_": false,
-    "uuid": false
+    "uuid": false,
+    "io": false
   }
 }
