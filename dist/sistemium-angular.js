@@ -140,6 +140,27 @@
 
 }());
 
+'use strict';
+
+(function () {
+
+  function saDebug () {
+
+    function log (ns) {
+      return window.debug (ns);
+    }
+
+    return {
+      log: log
+    };
+
+  }
+
+  angular.module('sistemium.services')
+    .service('saDebug', saDebug);
+
+})();
+
 (function () {
 
   angular.module('sistemium.services')
@@ -747,8 +768,6 @@
 angular.module('sistemium.services')
   .service('saSchema', function (DS) {
 
-    var models = {};
-
     var aggregate = function (field) {
 
       return {
@@ -794,31 +813,38 @@ angular.module('sistemium.services')
 
     };
 
-    var schema = {
+    return function (config) {
 
-      register: function (def) {
+      var models = {};
 
-        var resource = (models [def.name] = DS.defineResource(def));
+      return {
 
-        if (def.methods) {
-          resource.agg = aggregator (Object.keys(def.methods), 'sumFn');
-        }
+        register: function (def) {
 
-        return resource;
-      },
+          var resource = (models [def.name] = DS.defineResource(def));
 
-      models: function () {
-        return models;
-      },
+          if (def.methods) {
+            resource.agg = aggregator(Object.keys(def.methods), 'sumFn');
+          }
 
-      model: function (name) {
-        return models [name];
-      },
+          resource.getCount = function (params) {
+            return config.getCount.apply(this,params);
+          };
 
-      aggregate: aggregate
+          return resource;
+        },
 
+        models: function () {
+          return models;
+        },
+
+        model: function (name) {
+          return models [name];
+        },
+
+        aggregate: aggregate
+
+      };
     };
-
-    return schema;
 
   });
