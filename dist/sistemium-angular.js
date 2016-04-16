@@ -19,7 +19,6 @@
   angular.module('sistemium.models', []);
   angular.module('sistemium.dependencies', [
     'toastr',
-    'ngTable',
     'js-data',
     'ui.router.stateHelper'
   ]);
