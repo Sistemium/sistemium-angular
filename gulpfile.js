@@ -44,6 +44,10 @@ gulp.task('build', function() {
     .pipe(uglify())
     .pipe(rename('sistemium-angular.min.js'))
     .pipe(gulp.dest('./dist'));
+
+  gulp.src('./bower_components/socket.io-client/socket.io.js')
+    .pipe(rename('socket-io.js'))
+    .pipe(gulp.dest('./dist'));
 });
 
 /**
