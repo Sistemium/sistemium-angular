@@ -918,13 +918,16 @@ angular.module('sistemium.services')
 
     function jsDataSubscribe (filter) {
 
-      var subscription = {};
-
+      var subscription = {
+        id: true,
+        filter: filter
+      };
+      
+      subscriptions.push (subscription);
+      
       emitQ ('jsData:subscribe', filter)
         .then(function(id){
           subscription.id = id;
-          subscription.filter = filter;
-          subscriptions.push (subscription);
         });
 
       return function () {
