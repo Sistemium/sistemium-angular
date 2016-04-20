@@ -1,5 +1,5 @@
 angular.module('sistemium.services')
-  .service('saSchema', function (DS) {
+  .service('saSchema', function (DS, $q) {
 
     var aggregate = function (field) {
 
@@ -62,6 +62,33 @@ angular.module('sistemium.services')
 
           resource.getCount = function (params) {
             return config.getCount.apply(this,params);
+          };
+
+          resource.findAllWithRelations = function (params, options) {
+            return function (relations) {
+
+
+              return $q(function (resolve, reject) {
+                resource.findAll(params, options).then(function (results) {
+
+                  var promises = [];
+                  _.each(results, function (item) {
+                    promises.push(resource.loadRelations(item, relations));
+                  });
+
+                  $q.all(promises).then(function (data) {
+                    console.log(data);
+                    resolve();
+                  }).catch(function (err) {
+                    reject(err);
+                  });
+
+                }).catch(function (err) {
+                  reject(err);
+                });
+              });
+
+            };
           };
 
           return resource;
