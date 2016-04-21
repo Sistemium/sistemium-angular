@@ -8,9 +8,25 @@ angular.module('sistemium.services')
       path: '/socket.io-client'
     });
 
+    var jsDataPrefix;
+
     function init(app) {
       socket.io.uri = app.url.socket;
       socket.open();
+      jsDataPrefix = app.jsDataPrefix || '';
+    }
+
+    function wrappedOn (eventName, callback) {
+      var wrappedCallback = function () {
+        var args = arguments;
+        $rootScope.$apply(function () {
+          callback.apply(socket, args);
+        });
+      };
+      socket.on(eventName, wrappedCallback);
+      return function unSubscribe() {
+        socket.removeListener(eventName, wrappedCallback);
+      };
     }
 
     function emit (eventName, data, callback) {
@@ -65,16 +81,33 @@ angular.module('sistemium.services')
 
     var subscriptions = [];
 
+    function onJsData (event,callback) {
+
+      return wrappedOn (event, function (msg) {
+
+        if (angular.isString(msg.resource)) {
+          msg.resource = msg.resource.replace(jsDataPrefix,'');
+        }
+
+        callback (msg);
+
+      });
+
+    }
+
     function jsDataSubscribe (filter) {
 
       var subscription = {
         id: true,
-        filter: filter
+        originalFilter: filter,
+        filter: _.map(filter,function (f) {
+          return jsDataPrefix + f;
+        })
       };
-      
+
       subscriptions.push (subscription);
-      
-      emitQ ('jsData:subscribe', filter)
+
+      emitQ ('jsData:subscribe', subscription.filter)
         .then(function(id){
           subscription.id = id;
         });
@@ -109,20 +142,10 @@ angular.module('sistemium.services')
       init: init,
       emit: emit,
       emitQ: emitQ,
-      jsDataSubscribe: jsDataSubscribe,
+      on: wrappedOn,
 
-      on: function (eventName, callback) {
-        var wrappedCallback = function () {
-          var args = arguments;
-          $rootScope.$apply(function () {
-            callback.apply(socket, args);
-          });
-        };
-        socket.on(eventName, wrappedCallback);
-        return function unSubscribe() {
-          socket.removeListener(eventName, wrappedCallback);
-        };
-      },
+      jsDataSubscribe: jsDataSubscribe,
+      onJsData: onJsData,
 
       removeAllListeners: function () {
         socket.removeAllListeners();
