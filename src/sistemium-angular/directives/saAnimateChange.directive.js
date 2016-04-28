@@ -14,7 +14,7 @@
     function link (scope, elem, attr) {
       var cls = attr.changeClass;
       scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
-        if (nv !== ov) {
+        if ((nv||0) !== (ov||0)) {
           $animate.addClass(elem,cls).then(function() {
             $timeout(function() {
               $animate.removeClass(elem,cls);
