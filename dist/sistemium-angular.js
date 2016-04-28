@@ -65,7 +65,7 @@
           headers: {
             'X-Return-Post': 'true',
             'authorization': window.localStorage.getItem('authorization'),
-            'X-Page-Size': 300
+            'X-Page-Size': 1000
           }
         },
 
@@ -113,6 +113,62 @@
     .config(config);
 
 })();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saAnimateOnChange', saAnimateOnChange);
+
+  function saAnimateOnChange ($animate,$timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link (scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
+        if ((nv||0) !== (ov||0)) {
+          $animate.addClass(elem,cls).then(function() {
+            $timeout(function() {
+              $animate.removeClass(elem,cls);
+            });
+          });
+        }
+      });
+    }
+
+  }
+
+})();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saTypeaheadClickOpen', function ($timeout) {
+      return {
+        require: 'ngModel',
+        link: function($scope, elem) {
+          var triggerFunc = function() {
+            var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+            if (prev) {
+              ctrl.$setViewValue('');
+              $timeout(function() {
+                ctrl.$setViewValue(prev);
+              });
+            } else {
+              ctrl.$setViewValue(' ');
+            }
+          };
+          elem.bind('click', triggerFunc);
+        }
+      };
+    });
+
+}());
 
 'use strict';
 
@@ -964,59 +1020,3 @@ angular.module('sistemium.services')
     };
 
   });
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saAnimateOnChange', saAnimateOnChange);
-
-  function saAnimateOnChange ($animate,$timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link (scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
-        if ((nv||0) !== (ov||0)) {
-          $animate.addClass(elem,cls).then(function() {
-            $timeout(function() {
-              $animate.removeClass(elem,cls);
-            });
-          });
-        }
-      });
-    }
-
-  }
-
-})();
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saTypeaheadClickOpen', function ($timeout) {
-      return {
-        require: 'ngModel',
-        link: function($scope, elem) {
-          var triggerFunc = function() {
-            var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-            if (prev) {
-              ctrl.$setViewValue('');
-              $timeout(function() {
-                ctrl.$setViewValue(prev);
-              });
-            } else {
-              ctrl.$setViewValue(' ');
-            }
-          };
-          elem.bind('click', triggerFunc);
-        }
-      };
-    });
-
-}());
