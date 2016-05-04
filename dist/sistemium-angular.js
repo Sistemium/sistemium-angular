@@ -828,8 +828,11 @@ angular.module('sistemium.services')
 
         _.each(names, function (name) {
 
-          res [name] = function () {
-            return aggregate(name) [type] (owner[items]);
+          var trueName = name.name || name;
+          var trueType = name.type || type;
+
+          res [trueName] = function () {
+            return aggregate (trueName) [trueType] (owner[items]);
           };
 
         });
@@ -849,9 +852,20 @@ angular.module('sistemium.services')
 
           var resource = (models [def.name] = DS.defineResource(def));
 
-          if (def.methods) {
-            resource.agg = aggregator(Object.keys(def.methods), 'sumFn');
+          function mapper (type){
+            return function (name){
+              return {
+                name: name,
+                type: type
+              };
+            };
           }
+
+          var agg = _.map (def.methods, mapper('sumFn'));
+
+          Array.prototype.push.apply (agg, _.map (def.aggregables, mapper('sum')));
+
+          resource.agg = aggregator (agg);
 
           resource.getCount = function (params) {
             return config.getCount.apply(this,params);
