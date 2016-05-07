@@ -853,9 +853,9 @@ angular.module('sistemium.services')
           var resource = (models [def.name] = DS.defineResource(def));
 
           function mapper (type){
-            return function (name){
+            return function (val, key){
               return {
-                name: name,
+                name: angular.isString(val) ? val: key,
                 type: type
               };
             };
@@ -872,27 +872,20 @@ angular.module('sistemium.services')
           };
 
           resource.findAllWithRelations = function (params, options) {
+
             return function (relations) {
 
-
               return $q(function (resolve, reject) {
+
                 resource.findAll(params, options).then(function (results) {
 
-                  var promises = [];
-                  _.each(results, function (item) {
-                    promises.push(resource.loadRelations(item, relations));
-                  });
+                  return $q.all(_.map(results, function (item) {
+                      return resource.loadRelations(item, relations);
+                    }))
+                    .then(resolve,reject);
 
-                  $q.all(promises).then(function (data) {
-                    console.log(data);
-                    resolve();
-                  }).catch(function (err) {
-                    reject(err);
-                  });
+                }).catch(reject);
 
-                }).catch(function (err) {
-                  reject(err);
-                });
               });
 
             };
