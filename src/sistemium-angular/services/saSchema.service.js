@@ -60,9 +60,9 @@ angular.module('sistemium.services')
           var resource = (models [def.name] = DS.defineResource(def));
 
           function mapper (type){
-            return function (name){
+            return function (val, key){
               return {
-                name: name,
+                name: angular.isString(val) ? val: key,
                 type: type
               };
             };
