@@ -7,19 +7,19 @@ angular.module('sistemium.services')
 
         sumFn: function (items) {
           return _.reduce(items, function (sum, item) {
-            return sum + item [field]();
+            return sum + (_.result(item,field) || 0);
           }, 0);
         },
 
         sum: function (items) {
           return _.reduce(items, function (sum, item) {
-            return sum + item [field];
+            return sum + (_.get(item,field) || 0);
           }, 0);
         },
 
         custom: function (items, fn, starter) {
           return _.reduce(items, function (res, item) {
-            return fn (res, item [field] ());
+            return fn (res, _.result(item,field));
           },starter);
         }
 
