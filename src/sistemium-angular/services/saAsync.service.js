@@ -51,6 +51,6 @@
   }
 
   angular.module('sistemium.services')
-    .service('saAsync', saAsync);
+    .service('saAsync', ['$window', '$q', saAsync]);
 
 })();

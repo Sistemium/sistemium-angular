@@ -1,5 +1,5 @@
 angular.module('sistemium.services')
-  .service('saSchema', function (DS, $q) {
+  .service('saSchema', ['DS', '$q', function (DS, $q) {
 
     var aggregate = function (field) {
 
@@ -114,4 +114,4 @@ angular.module('sistemium.services')
       };
     };
 
-  });
+  }]);

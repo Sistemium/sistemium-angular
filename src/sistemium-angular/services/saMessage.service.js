@@ -12,7 +12,7 @@
 (function () {
 
   angular.module('sistemium.services')
-    .factory('saMessageService', function factory(toastr) {
+    .factory('saMessageService', ['toastr', function factory(toastr) {
       var service = {};
 
       /**
@@ -93,6 +93,6 @@
       };
 
       return service;
-    })
+    }])
   ;
 }());

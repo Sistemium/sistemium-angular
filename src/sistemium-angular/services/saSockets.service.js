@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('sistemium.services')
-  .service('saSockets', function ($rootScope, $q) {
+  .service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
     var socket = window.io({
       autoConnect: false,
@@ -157,4 +157,4 @@ angular.module('sistemium.services')
 
     };
 
-  });
+  }]);

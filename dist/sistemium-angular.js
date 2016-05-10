@@ -37,7 +37,7 @@
 
   angular.module('sistemium.models')
     //common configuration which can be overrided in projects where sistemium-angular injected
-    .config(function (DSProvider) {
+    .config(['DSProvider', function (DSProvider) {
 
       angular.extend(DSProvider.defaults, {
         beforeInject: function (resource, instance) {
@@ -53,11 +53,11 @@
         }
       });
 
-    })
+    }])
 
     //this is common configuration for http adapter, basePath
     //should be set in the project where sistemium-angular injected
-    .config(function (DSHttpAdapterProvider) {
+    .config(['DSHttpAdapterProvider', function (DSHttpAdapterProvider) {
 
       angular.extend(DSHttpAdapterProvider.defaults, {
 
@@ -84,7 +84,7 @@
           return angular.extend(res, params);
         }
       });
-    });
+    }]);
 
 }());
 
@@ -110,14 +110,14 @@
 
   angular
     .module('sistemium.dependencies')
-    .config(config);
+    .config(['toastrConfig', config]);
 
 })();
 
 (function () {
 
   angular.module('sistemium.directives')
-    .directive('saAnimateOnChange', saAnimateOnChange);
+    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
 
   function saAnimateOnChange ($animate,$timeout) {
 
@@ -147,7 +147,7 @@
 (function () {
 
   angular.module('sistemium.directives')
-    .directive('saTypeaheadClickOpen', function ($timeout) {
+    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
       return {
         require: 'ngModel',
         link: function($scope, elem) {
@@ -166,7 +166,7 @@
           elem.bind('click', triggerFunc);
         }
       };
-    });
+    }]);
 
 }());
 
@@ -223,7 +223,7 @@
   }
 
   angular.module('sistemium.services')
-    .service('saAsync', saAsync);
+    .service('saAsync', ['$window', '$q', saAsync]);
 
 })();
 
@@ -582,7 +582,7 @@
 (function () {
 
   angular.module('sistemium.services')
-    .factory('saMessageService', function factory(toastr) {
+    .factory('saMessageService', ['toastr', function factory(toastr) {
       var service = {};
 
       /**
@@ -663,14 +663,14 @@
       };
 
       return service;
-    })
+    }])
   ;
 }());
 
 
 (function () {
   angular.module('sistemium.services')
-    .service('saNgTable', function (NgTableParams) {
+    .service('saNgTable', ['NgTableParams', function (NgTableParams) {
 
       var lastFindAllParams = {},
         lastFindAllData = [],
@@ -787,12 +787,12 @@
 
       };
 
-    });
+    }]);
 
 }());
 
 angular.module('sistemium.services')
-  .service('saSchema', function (DS, $q) {
+  .service('saSchema', ['DS', '$q', function (DS, $q) {
 
     var aggregate = function (field) {
 
@@ -907,12 +907,12 @@ angular.module('sistemium.services')
       };
     };
 
-  });
+  }]);
 
 'use strict';
 
 angular.module('sistemium.services')
-  .service('saSockets', function ($rootScope, $q) {
+  .service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
     var socket = window.io({
       autoConnect: false,
@@ -1068,4 +1068,4 @@ angular.module('sistemium.services')
 
     };
 
-  });
+  }]);

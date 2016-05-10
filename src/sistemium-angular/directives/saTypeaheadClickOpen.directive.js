@@ -1,7 +1,7 @@
 (function () {
 
   angular.module('sistemium.directives')
-    .directive('saTypeaheadClickOpen', function ($timeout) {
+    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
       return {
         require: 'ngModel',
         link: function($scope, elem) {
@@ -20,6 +20,6 @@
           elem.bind('click', triggerFunc);
         }
       };
-    });
+    }]);
 
 }());

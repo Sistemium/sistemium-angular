@@ -2,7 +2,7 @@
 
   angular.module('sistemium.models')
     //common configuration which can be overrided in projects where sistemium-angular injected
-    .config(function (DSProvider) {
+    .config(['DSProvider', function (DSProvider) {
 
       angular.extend(DSProvider.defaults, {
         beforeInject: function (resource, instance) {
@@ -18,11 +18,11 @@
         }
       });
 
-    })
+    }])
 
     //this is common configuration for http adapter, basePath
     //should be set in the project where sistemium-angular injected
-    .config(function (DSHttpAdapterProvider) {
+    .config(['DSHttpAdapterProvider', function (DSHttpAdapterProvider) {
 
       angular.extend(DSHttpAdapterProvider.defaults, {
 
@@ -49,6 +49,6 @@
           return angular.extend(res, params);
         }
       });
-    });
+    }]);
 
 }());

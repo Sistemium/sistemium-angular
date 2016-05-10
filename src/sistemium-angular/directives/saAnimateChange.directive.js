@@ -1,7 +1,7 @@
 (function () {
 
   angular.module('sistemium.directives')
-    .directive('saAnimateOnChange', saAnimateOnChange);
+    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
 
   function saAnimateOnChange ($animate,$timeout) {
 

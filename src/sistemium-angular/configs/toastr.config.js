@@ -20,6 +20,6 @@
 
   angular
     .module('sistemium.dependencies')
-    .config(config);
+    .config(['toastrConfig', config]);
 
 })();

@@ -1,7 +1,7 @@
 
 (function () {
   angular.module('sistemium.services')
-    .service('saNgTable', function (NgTableParams) {
+    .service('saNgTable', ['NgTableParams', function (NgTableParams) {
 
       var lastFindAllParams = {},
         lastFindAllData = [],
@@ -118,6 +118,6 @@
 
       };
 
-    });
+    }]);
 
 }());
