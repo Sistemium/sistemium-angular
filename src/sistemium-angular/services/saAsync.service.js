@@ -19,7 +19,7 @@
           }));
 
           q.then (function(chunk){
-            onChunkSuccessFn (chunk);
+            onChunkSuccessFn (chunk,data.length);
             done(null,chunk);
           });
 
@@ -37,7 +37,7 @@
           if (err) {
             reject(err);
           } else {
-            resolve(results);
+            resolve(data,results);
           }
 
         });
