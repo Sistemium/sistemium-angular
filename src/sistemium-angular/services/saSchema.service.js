@@ -74,9 +74,17 @@ angular.module('sistemium.services')
 
           resource.agg = aggregator (agg);
 
-          resource.getCount = function (params) {
-            return config.getCount.apply(this,params);
-          };
+          _.each(config,function (val,key){
+
+            if (angular.isFunction(val)) {
+              resource [key] = function () {
+                return val.apply (this, arguments);
+              };
+            } else {
+              resource [key] = val;
+            }
+
+          });
 
           resource.findAllWithRelations = function (params, options) {
 
