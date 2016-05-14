@@ -191,7 +191,7 @@
           }));
 
           q.then (function(chunk){
-            onChunkSuccessFn (chunk);
+            onChunkSuccessFn (chunk,data.length);
             done(null,chunk);
           });
 
@@ -209,7 +209,7 @@
           if (err) {
             reject(err);
           } else {
-            resolve(results);
+            resolve(data,results);
           }
 
         });
@@ -668,7 +668,9 @@
 }());
 
 angular.module('sistemium.services')
-  .service('saSchema', ['DS', '$q', function (DS, $q) {
+  .service('saSchema', function (DS, $q, saAsync) {
+
+    var chunkSize = 6;
 
     var aggregate = function (field) {
 
@@ -743,21 +745,34 @@ angular.module('sistemium.services')
 
           resource.agg = aggregator (agg);
 
-          resource.getCount = function (params) {
-            return config.getCount.apply(this,params);
-          };
+          _.each(config,function (val,key){
+
+            if (angular.isFunction(val)) {
+              resource [key] = function () {
+                return val.apply (this, arguments);
+              };
+            } else {
+              resource [key] = val;
+            }
+
+          });
 
           resource.findAllWithRelations = function (params, options) {
 
-            return function (relations) {
+            return function (relations, onProgress, onError) {
 
               return $q(function (resolve, reject) {
 
                 resource.findAll(params, options).then(function (results) {
 
-                  return $q.all(_.map(results, function (item) {
-                      return resource.loadRelations(item, relations);
-                    }))
+                  function loadChunked (positions) {
+                    return saAsync.chunkSerial (chunkSize, positions, function(position){
+                      return resource.loadRelations(position,relations);
+                    }, onProgress || _.noop, onError || _.noop)
+                      .then(resolve,reject);
+                  }
+
+                  return loadChunked(results)
                     .then(resolve,reject);
 
                 }).catch(reject);
@@ -783,7 +798,7 @@ angular.module('sistemium.services')
       };
     };
 
-  }]);
+  });
 
 'use strict';
 
