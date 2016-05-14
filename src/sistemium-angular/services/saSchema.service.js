@@ -1,5 +1,7 @@
 angular.module('sistemium.services')
-  .service('saSchema', ['DS', '$q', function (DS, $q) {
+  .service('saSchema', function (DS, $q, saAsync) {
+
+    var chunkSize = 6;
 
     var aggregate = function (field) {
 
@@ -88,15 +90,20 @@ angular.module('sistemium.services')
 
           resource.findAllWithRelations = function (params, options) {
 
-            return function (relations) {
+            return function (relations, onProgress, onError) {
 
               return $q(function (resolve, reject) {
 
                 resource.findAll(params, options).then(function (results) {
 
-                  return $q.all(_.map(results, function (item) {
-                      return resource.loadRelations(item, relations);
-                    }))
+                  function loadChunked (positions) {
+                    return saAsync.chunkSerial (chunkSize, positions, function(position){
+                      return resource.loadRelations(position,relations);
+                    }, onProgress || _.noop, onError || _.noop)
+                      .then(resolve,reject);
+                  }
+
+                  return loadChunked(results)
                     .then(resolve,reject);
 
                 }).catch(reject);
@@ -122,4 +129,4 @@ angular.module('sistemium.services')
       };
     };
 
-  }]);
+  });
