@@ -191,12 +191,16 @@
           }));
 
           q.then (function(chunk){
-            onChunkSuccessFn (chunk,data.length);
+            if (angular.isFunction(onChunkSuccessFn)){
+              onChunkSuccessFn (chunk,data.length);
+            }
             done(null,chunk);
           });
 
           return q.catch(function (err){
-            onChunkErrorFn (chunk);
+            if (angular.isFunction(onChunkErrorFn)) {
+              onChunkErrorFn(chunk);
+            }
             done(err,chunk);
           });
         };
@@ -759,7 +763,7 @@ angular.module('sistemium.services')
 
           resource.findAllWithRelations = function (params, options) {
 
-            return function (relations, onProgress, onError) {
+            return function (relations, onProgress, onError, relOptions) {
 
               return $q(function (resolve, reject) {
 
@@ -767,7 +771,7 @@ angular.module('sistemium.services')
 
                   function loadChunked (positions) {
                     return saAsync.chunkSerial (chunkSize, positions, function(position){
-                      return resource.loadRelations(position,relations);
+                      return resource.loadRelations(position,relations,relOptions);
                     }, onProgress || _.noop, onError || _.noop)
                       .then(resolve,reject);
                   }
