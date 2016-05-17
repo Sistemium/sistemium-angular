@@ -19,12 +19,16 @@
           }));
 
           q.then (function(chunk){
-            onChunkSuccessFn (chunk,data.length);
+            if (angular.isFunction(onChunkSuccessFn)){
+              onChunkSuccessFn (chunk,data.length);
+            }
             done(null,chunk);
           });
 
           return q.catch(function (err){
-            onChunkErrorFn (chunk);
+            if (angular.isFunction(onChunkErrorFn)) {
+              onChunkErrorFn(chunk);
+            }
             done(err,chunk);
           });
         };
