@@ -90,7 +90,7 @@ angular.module('sistemium.services')
 
           resource.findAllWithRelations = function (params, options) {
 
-            return function (relations, onProgress, onError) {
+            return function (relations, onProgress, onError, relOptions) {
 
               return $q(function (resolve, reject) {
 
@@ -98,7 +98,7 @@ angular.module('sistemium.services')
 
                   function loadChunked (positions) {
                     return saAsync.chunkSerial (chunkSize, positions, function(position){
-                      return resource.loadRelations(position,relations);
+                      return resource.loadRelations(position,relations,relOptions);
                     }, onProgress || _.noop, onError || _.noop)
                       .then(resolve,reject);
                   }
