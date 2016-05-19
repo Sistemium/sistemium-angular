@@ -17,6 +17,7 @@
   angular.module('sistemium.filters', []);
   angular.module('sistemium.services', []);
   angular.module('sistemium.models', []);
+  angular.module('sistemium.schema', []);
   angular.module('sistemium.dependencies', [
     'toastr',
     'js-data',
@@ -28,7 +29,8 @@
     'sistemium.directives',
     'sistemium.filters',
     'sistemium.services',
-    'sistemium.models'
+    'sistemium.models',
+    'sistemium.schema'
   ]);
 
 })(angular);
