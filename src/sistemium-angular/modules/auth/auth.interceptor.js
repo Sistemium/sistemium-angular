@@ -1,13 +1,13 @@
 (function () {
   'use strict';
 
-  function authInterceptor($q, $injector, Token) {
+  function authInterceptor($q, $injector, saToken) {
 
     return {
 
       // Add authorization token to headers
       request: function (config) {
-        var token = Token.get();
+        var token = saToken.get();
 
         config.headers = config.headers || {};
 
@@ -23,7 +23,7 @@
 
         if (response.status === 401 || response.status === 403) {
           $injector.get('$state').go('debt.login');
-          Token.destroy();
+          saToken.destroy();
         }
         return $q.reject(response);
       }
@@ -33,6 +33,6 @@
   }
 
   angular.module('sistemium.auth')
-    .factory('authInterceptor', authInterceptor);
+    .factory('saAuthInterceptor', authInterceptor);
 
 })();

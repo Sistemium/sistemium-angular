@@ -31,6 +31,6 @@ function TokenStore(localStorageService,$rootScope) {
 }
 
 angular.module('sistemium.auth')
-  .service('Token', TokenStore);
+  .service('saToken', TokenStore);
 
 })();

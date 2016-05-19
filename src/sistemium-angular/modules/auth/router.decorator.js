@@ -3,7 +3,7 @@
 (function() {
 
 angular.module('sistemium.auth')
-  .run(function($rootScope, $state, Auth, sabErrorsService) {
+  .run(function($rootScope, $state, saAuth, sabErrorsService) {
     // Redirect to login if route requires auth and the user is not logged in, or doesn't have required role
     $rootScope.$on('$stateChangeStart', function(event, next) {
       sabErrorsService.clear();
@@ -12,18 +12,18 @@ angular.module('sistemium.auth')
       }
 
       if (typeof next.authenticate === 'string') {
-        Auth.hasRole(next.authenticate, _.noop).then(function (has) {
+        saAuth.hasRole(next.authenticate, _.noop).then(function (has) {
           if (has) {
             return;
           }
 
           event.preventDefault();
-          return Auth.isLoggedIn(_.noop).then(function (is) {
+          return saAuth.isLoggedIn(_.noop).then(function (is) {
             $state.go(is ? 'main' : 'login');
           });
         });
       } else {
-        Auth.isLoggedIn(_.noop).then(function (is) {
+        saAuth.isLoggedIn(_.noop).then(function (is) {
           if (is) {
             return;
           }

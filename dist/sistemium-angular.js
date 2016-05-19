@@ -45,7 +45,7 @@
       'ui.router'
     ])
     .config(function ($httpProvider) {
-      $httpProvider.interceptors.push('authInterceptor');
+      $httpProvider.interceptors.push('saAuthInterceptor');
     })
   ;
 })();
@@ -200,6 +200,62 @@ angular.module('sistemium.util', []);
 
 (function () {
 
+  angular.module('sistemium.directives')
+    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange ($animate,$timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link (scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
+        if ((nv||0) !== (ov||0)) {
+          $animate.addClass(elem,cls).then(function() {
+            $timeout(function() {
+              $animate.removeClass(elem,cls);
+            });
+          });
+        }
+      });
+    }
+
+  }
+
+})();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+      return {
+        require: 'ngModel',
+        link: function($scope, elem) {
+          var triggerFunc = function() {
+            var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+            if (prev) {
+              ctrl.$setViewValue('');
+              $timeout(function() {
+                ctrl.$setViewValue(prev);
+              });
+            } else {
+              ctrl.$setViewValue(' ');
+            }
+          };
+          elem.bind('click', triggerFunc);
+        }
+      };
+    }]);
+
+}());
+
+(function () {
+
   angular.module('sistemium.models')
     //common configuration which can be overrided in projects where sistemium-angular injected
     .config(['DSProvider', function (DSProvider) {
@@ -278,62 +334,6 @@ angular.module('sistemium.util', []);
     .config(['toastrConfig', config]);
 
 })();
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange ($animate,$timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link (scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
-        if ((nv||0) !== (ov||0)) {
-          $animate.addClass(elem,cls).then(function() {
-            $timeout(function() {
-              $animate.removeClass(elem,cls);
-            });
-          });
-        }
-      });
-    }
-
-  }
-
-})();
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-      return {
-        require: 'ngModel',
-        link: function($scope, elem) {
-          var triggerFunc = function() {
-            var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-            if (prev) {
-              ctrl.$setViewValue('');
-              $timeout(function() {
-                ctrl.$setViewValue(prev);
-              });
-            } else {
-              ctrl.$setViewValue(' ');
-            }
-          };
-          elem.bind('click', triggerFunc);
-        }
-      };
-    }]);
-
-}());
 
 'use strict';
 
@@ -1000,13 +1000,13 @@ angular.module('sistemium.services')
 (function () {
   'use strict';
 
-  function authInterceptor($q, $injector, Token) {
+  function authInterceptor($q, $injector, saToken) {
 
     return {
 
       // Add authorization token to headers
       request: function (config) {
-        var token = Token.get();
+        var token = saToken.get();
 
         config.headers = config.headers || {};
 
@@ -1022,7 +1022,7 @@ angular.module('sistemium.services')
 
         if (response.status === 401 || response.status === 403) {
           $injector.get('$state').go('debt.login');
-          Token.destroy();
+          saToken.destroy();
         }
         return $q.reject(response);
       }
@@ -1032,7 +1032,7 @@ angular.module('sistemium.services')
   }
 
   angular.module('sistemium.auth')
-    .factory('authInterceptor', authInterceptor);
+    .factory('saAuthInterceptor', authInterceptor);
 
 })();
 
@@ -1043,7 +1043,7 @@ angular.module('sistemium.services')
   function AuthService($location,
                        $http,
                        $q,
-                       Token,
+                       saToken,
                        appConfig,
                        Util,
                        Account,
@@ -1053,7 +1053,7 @@ angular.module('sistemium.services')
     var currentUser = {};
     var userRoles = appConfig.userRoles || [];
 
-    if (Token.get() && $location.path() !== '/logout') {
+    if (saToken.get() && $location.path() !== '/logout') {
       currentUser = Account.find('me');
       currentUser.then(function (res) {
         Account.loadRelations(res, ['providerAccount']).then(function () {
@@ -1100,7 +1100,7 @@ angular.module('sistemium.services')
           })
           .then(function (user) {
             currentUser = user.data;
-            Token.save(token);
+            saToken.save(token);
             safeCb(callback)(null, currentUser);
             $rootScope.$broadcast('logged-in');
             return currentUser;
@@ -1116,7 +1116,7 @@ angular.module('sistemium.services')
        * Delete access token and user info
        */
       logout: function () {
-        Token.destroy();
+        saToken.destroy();
         currentUser = {};
         $rootScope.$broadcast('logged-off');
       },
@@ -1131,7 +1131,7 @@ angular.module('sistemium.services')
       createUser: function (user, callback) {
         return Account.create(user).then(
           function (data) {
-            Token.save(data.token);
+            saToken.save(data.token);
             currentUser = Account.find('me');
             return safeCb(callback)(null, user);
           },
@@ -1230,7 +1230,7 @@ angular.module('sistemium.services')
        * @return {String} - a token string used for authenticating
        */
       getToken: function () {
-        return Token.get();
+        return saToken.get();
       }
     };
 
@@ -1238,7 +1238,7 @@ angular.module('sistemium.services')
   }
 
   angular.module('sistemium.auth')
-    .factory('Auth', AuthService);
+    .factory('saAuth', AuthService);
 
 })();
 
@@ -1248,7 +1248,7 @@ angular.module('sistemium.services')
 (function() {
 
 angular.module('sistemium.auth')
-  .run(function($rootScope, $state, Auth, sabErrorsService) {
+  .run(function($rootScope, $state, saAuth, sabErrorsService) {
     // Redirect to login if route requires auth and the user is not logged in, or doesn't have required role
     $rootScope.$on('$stateChangeStart', function(event, next) {
       sabErrorsService.clear();
@@ -1257,18 +1257,18 @@ angular.module('sistemium.auth')
       }
 
       if (typeof next.authenticate === 'string') {
-        Auth.hasRole(next.authenticate, _.noop).then(function (has) {
+        saAuth.hasRole(next.authenticate, _.noop).then(function (has) {
           if (has) {
             return;
           }
 
           event.preventDefault();
-          return Auth.isLoggedIn(_.noop).then(function (is) {
+          return saAuth.isLoggedIn(_.noop).then(function (is) {
             $state.go(is ? 'main' : 'login');
           });
         });
       } else {
-        Auth.isLoggedIn(_.noop).then(function (is) {
+        saAuth.isLoggedIn(_.noop).then(function (is) {
           if (is) {
             return;
           }
@@ -1315,7 +1315,7 @@ function TokenStore(localStorageService,$rootScope) {
 }
 
 angular.module('sistemium.auth')
-  .service('Token', TokenStore);
+  .service('saToken', TokenStore);
 
 })();
 

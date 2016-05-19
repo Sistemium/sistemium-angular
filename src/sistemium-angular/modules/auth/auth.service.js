@@ -5,7 +5,7 @@
   function AuthService($location,
                        $http,
                        $q,
-                       Token,
+                       saToken,
                        appConfig,
                        Util,
                        Account,
@@ -15,7 +15,7 @@
     var currentUser = {};
     var userRoles = appConfig.userRoles || [];
 
-    if (Token.get() && $location.path() !== '/logout') {
+    if (saToken.get() && $location.path() !== '/logout') {
       currentUser = Account.find('me');
       currentUser.then(function (res) {
         Account.loadRelations(res, ['providerAccount']).then(function () {
@@ -62,7 +62,7 @@
           })
           .then(function (user) {
             currentUser = user.data;
-            Token.save(token);
+            saToken.save(token);
             safeCb(callback)(null, currentUser);
             $rootScope.$broadcast('logged-in');
             return currentUser;
@@ -78,7 +78,7 @@
        * Delete access token and user info
        */
       logout: function () {
-        Token.destroy();
+        saToken.destroy();
         currentUser = {};
         $rootScope.$broadcast('logged-off');
       },
@@ -93,7 +93,7 @@
       createUser: function (user, callback) {
         return Account.create(user).then(
           function (data) {
-            Token.save(data.token);
+            saToken.save(data.token);
             currentUser = Account.find('me');
             return safeCb(callback)(null, user);
           },
@@ -192,7 +192,7 @@
        * @return {String} - a token string used for authenticating
        */
       getToken: function () {
-        return Token.get();
+        return saToken.get();
       }
     };
 
@@ -200,6 +200,6 @@
   }
 
   angular.module('sistemium.auth')
-    .factory('Auth', AuthService);
+    .factory('saAuth', AuthService);
 
 })();
