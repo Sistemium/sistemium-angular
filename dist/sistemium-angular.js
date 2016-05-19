@@ -35,6 +35,10 @@
 
 })(angular);
 
+'use strict';
+
+angular.module('sistemium.util', []);
+
 (function () {
   'use strict';
 
@@ -187,72 +191,12 @@
   })(angular)
 ;
 
-'use strict';
-
-angular.module('sistemium.util', []);
-
 (function (ng) {
   'use strict';
 
   ng.module('sistemium.auth.models', []);
 
 })(angular);
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange ($animate,$timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link (scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
-        if ((nv||0) !== (ov||0)) {
-          $animate.addClass(elem,cls).then(function() {
-            $timeout(function() {
-              $animate.removeClass(elem,cls);
-            });
-          });
-        }
-      });
-    }
-
-  }
-
-})();
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-      return {
-        require: 'ngModel',
-        link: function($scope, elem) {
-          var triggerFunc = function() {
-            var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-            if (prev) {
-              ctrl.$setViewValue('');
-              $timeout(function() {
-                ctrl.$setViewValue(prev);
-              });
-            } else {
-              ctrl.$setViewValue(' ');
-            }
-          };
-          elem.bind('click', triggerFunc);
-        }
-      };
-    }]);
-
-}());
 
 (function () {
 
@@ -334,6 +278,62 @@ angular.module('sistemium.util', []);
     .config(['toastrConfig', config]);
 
 })();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange ($animate,$timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link (scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
+        if ((nv||0) !== (ov||0)) {
+          $animate.addClass(elem,cls).then(function() {
+            $timeout(function() {
+              $animate.removeClass(elem,cls);
+            });
+          });
+        }
+      });
+    }
+
+  }
+
+})();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+      return {
+        require: 'ngModel',
+        link: function($scope, elem) {
+          var triggerFunc = function() {
+            var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+            if (prev) {
+              ctrl.$setViewValue('');
+              $timeout(function() {
+                ctrl.$setViewValue(prev);
+              });
+            } else {
+              ctrl.$setViewValue(' ');
+            }
+          };
+          elem.bind('click', triggerFunc);
+        }
+      };
+    }]);
+
+}());
 
 'use strict';
 
@@ -836,6 +836,130 @@ angular.module('sistemium.util', []);
   ;
 }());
 
+
+(function () {
+  angular.module('sistemium.services')
+    .service('saNgTable', function (NgTableParams) {
+
+      var lastFindAllParams = {},
+        lastFindAllData = [],
+        totalCount = 0
+        ;
+
+      function ngTableToV4Params(params) {
+
+        var result = {
+          'x-page-size:': params && params.count() || 12,
+          'x-start-page:': params && params.page() || 1
+        };
+
+        if (params && params.sorting()) {
+          var sortBy = _.reduce(params.sorting(), function (res, dir, field) {
+            return res + ',' + (dir === 'desc' ? '-' : '') + field;
+          }, '').substr(1);
+          if (sortBy) {
+            result['x-order-by:'] = sortBy;
+          }
+        }
+
+        return result;
+
+      }
+
+      function getData (ctrl,model) {
+
+        return function ($defer, params) {
+
+          var v4Params = ngTableToV4Params(params);
+          var needCount = !totalCount ||
+              _.get(v4Params, 'searchFor:') !== _.get(lastFindAllParams, 'searchFor:')
+            ;
+          var countPromise;
+          var setPage;
+
+          if (needCount) {
+            countPromise = model.getCount(_.pick(v4Params, ['searchFor:', 'searchFields:'])).then(function (res) {
+              ctrl.ngTableParams.total(totalCount = res);
+              if (res < (params.page() - 1) * params.count()) {
+                v4Params['x-start-page:'] = 1;
+                setPage = 1;
+              }
+              return v4Params;
+            });
+            countPromise.catch(function (res) {
+              //ctrl.processServerError(res);
+              $defer.reject();
+            });
+          }
+
+          var dataPromiseOrNothing = function () {
+            var p = v4Params;
+            if (!_.matches(p)(ctrl.lastFindAllParams) || !_.matches(ctrl.lastFindAllParams)(p)) {
+              return model.findAll(p, {bypassCache: true})
+                .then(function (data) {
+                  if (setPage) {
+                    params.page(setPage);
+                  }
+                  lastFindAllParams = p;
+                  lastFindAllData = data;
+                  $defer.resolve(lastFindAllData);
+                }, function () {
+                  $defer.reject();
+                });
+            } else {
+              if (setPage) {
+                params.page(setPage);
+              }
+              $defer.resolve(lastFindAllData);
+            }
+          };
+
+          if (countPromise) {
+            ctrl.busy = countPromise.then(dataPromiseOrNothing);
+          } else {
+            ctrl.busy = dataPromiseOrNothing(v4Params);
+          }
+
+        };
+
+      }
+
+      return {
+
+        setup: function (ctrl, model) {
+
+          var counts = !ctrl.ngTable.noPages && (ctrl.ngTable.counts || [12, 25, 50, 100]);
+          var count = ctrl.ngTable.count || 12;
+
+          if (counts.indexOf(count) < 0) {
+            counts.push(count);
+            counts = _.sortBy(counts);
+          }
+
+          ctrl.ngTableParams = new NgTableParams(angular.extend({
+            page: 1,
+            count: count,
+            clearData: function () {
+              lastFindAllData = [];
+            }
+          }, ctrl.ngTable), {
+            filterDelay: 0,
+            dataset: lastFindAllData,
+            counts: counts,
+            getData: getData (ctrl,model)
+          });
+
+          return ctrl.ngTableParams;
+        },
+
+        ngTableToV4Params: ngTableToV4Params
+
+      };
+
+    });
+
+}());
+
 'use strict';
 
 angular.module('sistemium.services')
@@ -996,6 +1120,72 @@ angular.module('sistemium.services')
     };
 
   }]);
+
+'use strict';
+
+(function () {
+
+  /**
+   * The Util service is for thin, globally reusable, utility functions
+   */
+  function UtilService($window) {
+    var Util = {
+      /**
+       * Return a callback or noop function
+       *
+       * @param  {Function|*} cb - a 'potential' function
+       * @return {Function}
+       */
+      safeCb: function (cb) {
+        return (angular.isFunction(cb)) ? cb : angular.noop;
+      },
+
+      /**
+       * Parse a given url with the use of an anchor element
+       *
+       * @param  {String} url - the url to parse
+       * @return {Object}     - the parsed url, anchor element
+       */
+      urlParse: function (url) {
+        var a = document.createElement('a');
+        a.href = url;
+
+        // Special treatment for IE, see http://stackoverflow.com/a/13405933 for details
+        if (a.host === '') {
+          a.href = a.href;
+        }
+
+        return a;
+      },
+
+      /**
+       * Test whether or not a given url is same origin
+       *
+       * @param  {String}           url       - url to test
+       * @param  {String|String[]}  [origins] - additional origins to test against
+       * @return {Boolean}                    - true if url is same origin
+       */
+      isSameOrigin: function (url, origins) {
+        url = Util.urlParse(url);
+        origins = (origins && [].concat(origins)) || [];
+        origins = origins.map(Util.urlParse);
+        origins.push($window.location);
+        origins = origins.filter(function (o) {
+          return url.hostname === o.hostname &&
+            url.port === o.port &&
+            url.protocol === o.protocol;
+        });
+        return (origins.length >= 1);
+      }
+    };
+
+    return Util;
+  }
+
+  angular.module('sistemium.util')
+    .factory('Util', UtilService);
+
+})();
 
 (function () {
   'use strict';
@@ -1316,72 +1506,6 @@ function TokenStore(localStorageService,$rootScope) {
 
 angular.module('sistemium.auth')
   .service('saToken', TokenStore);
-
-})();
-
-'use strict';
-
-(function () {
-
-  /**
-   * The Util service is for thin, globally reusable, utility functions
-   */
-  function UtilService($window) {
-    var Util = {
-      /**
-       * Return a callback or noop function
-       *
-       * @param  {Function|*} cb - a 'potential' function
-       * @return {Function}
-       */
-      safeCb: function (cb) {
-        return (angular.isFunction(cb)) ? cb : angular.noop;
-      },
-
-      /**
-       * Parse a given url with the use of an anchor element
-       *
-       * @param  {String} url - the url to parse
-       * @return {Object}     - the parsed url, anchor element
-       */
-      urlParse: function (url) {
-        var a = document.createElement('a');
-        a.href = url;
-
-        // Special treatment for IE, see http://stackoverflow.com/a/13405933 for details
-        if (a.host === '') {
-          a.href = a.href;
-        }
-
-        return a;
-      },
-
-      /**
-       * Test whether or not a given url is same origin
-       *
-       * @param  {String}           url       - url to test
-       * @param  {String|String[]}  [origins] - additional origins to test against
-       * @return {Boolean}                    - true if url is same origin
-       */
-      isSameOrigin: function (url, origins) {
-        url = Util.urlParse(url);
-        origins = (origins && [].concat(origins)) || [];
-        origins = origins.map(Util.urlParse);
-        origins.push($window.location);
-        origins = origins.filter(function (o) {
-          return url.hostname === o.hostname &&
-            url.port === o.port &&
-            url.protocol === o.protocol;
-        });
-        return (origins.length >= 1);
-      }
-    };
-
-    return Util;
-  }
-
-  angular.module('sistemium.util')
-    .factory('Util', UtilService);
 
 })();
 
