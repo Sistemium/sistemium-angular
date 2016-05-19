@@ -11,20 +11,20 @@
 
           sumFn: function (items) {
             return _.reduce(items, function (sum, item) {
-              return sum + (_.result(item, field) || 0);
+              return sum + (_.result(item,field) || 0);
             }, 0);
           },
 
           sum: function (items) {
             return _.reduce(items, function (sum, item) {
-              return sum + (_.get(item, field) || 0);
+              return sum + (_.get(item,field) || 0);
             }, 0);
           },
 
           custom: function (items, fn, starter) {
             return _.reduce(items, function (res, item) {
-              return fn(res, _.result(item, field));
-            }, starter);
+              return fn (res, _.result(item,field));
+            },starter);
           }
 
         };
@@ -43,7 +43,7 @@
             var trueType = name.type || type;
 
             res [trueName] = function () {
-              return aggregate(trueName) [trueType](owner[items]);
+              return aggregate (trueName) [trueType] (owner[items]);
             };
 
           });
@@ -63,26 +63,26 @@
 
             var resource = (models [def.name] = DS.defineResource(def));
 
-            function mapper(type) {
-              return function (val, key) {
+            function mapper (type){
+              return function (val, key){
                 return {
-                  name: angular.isString(val) ? val : key,
+                  name: angular.isString(val) ? val: key,
                   type: type
                 };
               };
             }
 
-            var agg = _.map(def.methods, mapper('sumFn'));
+            var agg = _.map (def.methods, mapper('sumFn'));
 
-            Array.prototype.push.apply(agg, _.map(def.aggregables, mapper('sum')));
+            Array.prototype.push.apply (agg, _.map (def.aggregables, mapper('sum')));
 
-            resource.agg = aggregator(agg);
+            resource.agg = aggregator (agg);
 
-            _.each(config, function (val, key) {
+            _.each(config,function (val,key){
 
               if (angular.isFunction(val)) {
                 resource [key] = function () {
-                  return val.apply(this, arguments);
+                  return val.apply (this, arguments);
                 };
               } else {
                 resource [key] = val;
@@ -92,21 +92,21 @@
 
             resource.findAllWithRelations = function (params, options) {
 
-              return function (relations, onProgress, onError) {
+              return function (relations, onProgress, onError, relOptions) {
 
                 return $q(function (resolve, reject) {
 
                   resource.findAll(params, options).then(function (results) {
 
-                    function loadChunked(positions) {
-                      return saAsync.chunkSerial(chunkSize, positions, function (position) {
-                          return resource.loadRelations(position, relations);
+                    function loadChunked (positions) {
+                      return saAsync.chunkSerial (chunkSize, positions, function(position){
+                          return resource.loadRelations(position,relations,relOptions);
                         }, onProgress || _.noop, onError || _.noop)
-                        .then(resolve, reject);
+                        .then(resolve,reject);
                     }
 
                     return loadChunked(results)
-                      .then(resolve, reject);
+                      .then(resolve,reject);
 
                   }).catch(reject);
 
@@ -132,4 +132,5 @@
       };
 
     });
-})(angular);
+  })(angular)
+;
