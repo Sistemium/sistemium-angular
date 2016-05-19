@@ -1,6 +1,6 @@
 (function (ng) {
   'use strict';
-  ng.module('sistemium.schema')
+  ng.module('sistemium.schema', [])
     .service('saSchema', function (DS, $q, saAsync) {
 
       var chunkSize = 6;

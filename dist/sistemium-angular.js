@@ -17,6 +17,7 @@
   angular.module('sistemium.filters', []);
   angular.module('sistemium.services', []);
   angular.module('sistemium.models', []);
+  angular.module('sistemium.schema', []);
   angular.module('sistemium.dependencies', [
     'toastr',
     'js-data',
@@ -28,8 +29,172 @@
     'sistemium.directives',
     'sistemium.filters',
     'sistemium.services',
-    'sistemium.models'
+    'sistemium.models',
+    'sistemium.schema'
   ]);
+
+})(angular);
+
+(function () {
+  'use strict';
+
+  angular.module('sistemium.auth', [
+      'authApiApp.constants',
+      'sistemium.schema',
+      'sistemium.util',
+      'ui.router'
+    ])
+    .config(function ($httpProvider) {
+      $httpProvider.interceptors.push('authInterceptor');
+    })
+  ;
+})();
+
+(function (ng) {
+  'use strict';
+  ng.module('sistemium.schema', [])
+    .service('saSchema', function (DS, $q, saAsync) {
+
+      var chunkSize = 6;
+
+      var aggregate = function (field) {
+
+        return {
+
+          sumFn: function (items) {
+            return _.reduce(items, function (sum, item) {
+              return sum + (_.result(item,field) || 0);
+            }, 0);
+          },
+
+          sum: function (items) {
+            return _.reduce(items, function (sum, item) {
+              return sum + (_.get(item,field) || 0);
+            }, 0);
+          },
+
+          custom: function (items, fn, starter) {
+            return _.reduce(items, function (res, item) {
+              return fn (res, _.result(item,field));
+            },starter);
+          }
+
+        };
+
+      };
+
+      var aggregator = function (names, type) {
+
+        return function (owner, items) {
+
+          var res = {};
+
+          _.each(names, function (name) {
+
+            var trueName = name.name || name;
+            var trueType = name.type || type;
+
+            res [trueName] = function () {
+              return aggregate (trueName) [trueType] (owner[items]);
+            };
+
+          });
+
+          return res;
+        };
+
+      };
+
+      return function (config) {
+
+        var models = {};
+
+        return {
+
+          register: function (def) {
+
+            var resource = (models [def.name] = DS.defineResource(def));
+
+            function mapper (type){
+              return function (val, key){
+                return {
+                  name: angular.isString(val) ? val: key,
+                  type: type
+                };
+              };
+            }
+
+            var agg = _.map (def.methods, mapper('sumFn'));
+
+            Array.prototype.push.apply (agg, _.map (def.aggregables, mapper('sum')));
+
+            resource.agg = aggregator (agg);
+
+            _.each(config,function (val,key){
+
+              if (angular.isFunction(val)) {
+                resource [key] = function () {
+                  return val.apply (this, arguments);
+                };
+              } else {
+                resource [key] = val;
+              }
+
+            });
+
+            resource.findAllWithRelations = function (params, options) {
+
+              return function (relations, onProgress, onError, relOptions) {
+
+                return $q(function (resolve, reject) {
+
+                  resource.findAll(params, options).then(function (results) {
+
+                    function loadChunked (positions) {
+                      return saAsync.chunkSerial (chunkSize, positions, function(position){
+                          return resource.loadRelations(position,relations,relOptions);
+                        }, onProgress || _.noop, onError || _.noop)
+                        .then(resolve,reject);
+                    }
+
+                    return loadChunked(results)
+                      .then(resolve,reject);
+
+                  }).catch(reject);
+
+                });
+
+              };
+            };
+
+            return resource;
+          },
+
+          models: function () {
+            return models;
+          },
+
+          model: function (name) {
+            return models [name];
+          },
+
+          aggregate: aggregate
+
+        };
+      };
+
+    });
+  })(angular)
+;
+
+'use strict';
+
+angular.module('sistemium.util', []);
+
+(function (ng) {
+  'use strict';
+
+  ng.module('sistemium.auth.models', []);
 
 })(angular);
 
@@ -671,139 +836,6 @@
   ;
 }());
 
-angular.module('sistemium.services')
-  .service('saSchema', function (DS, $q, saAsync) {
-
-    var chunkSize = 6;
-
-    var aggregate = function (field) {
-
-      return {
-
-        sumFn: function (items) {
-          return _.reduce(items, function (sum, item) {
-            return sum + (_.result(item,field) || 0);
-          }, 0);
-        },
-
-        sum: function (items) {
-          return _.reduce(items, function (sum, item) {
-            return sum + (_.get(item,field) || 0);
-          }, 0);
-        },
-
-        custom: function (items, fn, starter) {
-          return _.reduce(items, function (res, item) {
-            return fn (res, _.result(item,field));
-          },starter);
-        }
-
-      };
-
-    };
-
-    var aggregator = function (names, type) {
-
-      return function (owner, items) {
-
-        var res = {};
-
-        _.each(names, function (name) {
-
-          var trueName = name.name || name;
-          var trueType = name.type || type;
-
-          res [trueName] = function () {
-            return aggregate (trueName) [trueType] (owner[items]);
-          };
-
-        });
-
-        return res;
-      };
-
-    };
-
-    return function (config) {
-
-      var models = {};
-
-      return {
-
-        register: function (def) {
-
-          var resource = (models [def.name] = DS.defineResource(def));
-
-          function mapper (type){
-            return function (val, key){
-              return {
-                name: angular.isString(val) ? val: key,
-                type: type
-              };
-            };
-          }
-
-          var agg = _.map (def.methods, mapper('sumFn'));
-
-          Array.prototype.push.apply (agg, _.map (def.aggregables, mapper('sum')));
-
-          resource.agg = aggregator (agg);
-
-          _.each(config,function (val,key){
-
-            if (angular.isFunction(val)) {
-              resource [key] = function () {
-                return val.apply (this, arguments);
-              };
-            } else {
-              resource [key] = val;
-            }
-
-          });
-
-          resource.findAllWithRelations = function (params, options) {
-
-            return function (relations, onProgress, onError, relOptions) {
-
-              return $q(function (resolve, reject) {
-
-                resource.findAll(params, options).then(function (results) {
-
-                  function loadChunked (positions) {
-                    return saAsync.chunkSerial (chunkSize, positions, function(position){
-                      return resource.loadRelations(position,relations,relOptions);
-                    }, onProgress || _.noop, onError || _.noop)
-                      .then(resolve,reject);
-                  }
-
-                  return loadChunked(results)
-                    .then(resolve,reject);
-
-                }).catch(reject);
-
-              });
-
-            };
-          };
-
-          return resource;
-        },
-
-        models: function () {
-          return models;
-        },
-
-        model: function (name) {
-          return models [name];
-        },
-
-        aggregate: aggregate
-
-      };
-    };
-
-  });
-
 'use strict';
 
 angular.module('sistemium.services')
@@ -964,3 +996,430 @@ angular.module('sistemium.services')
     };
 
   }]);
+
+(function () {
+  'use strict';
+
+  function authInterceptor($q, $injector, Token) {
+
+    return {
+
+      // Add authorization token to headers
+      request: function (config) {
+        var token = Token.get();
+
+        config.headers = config.headers || {};
+
+        if (token) {
+          config.headers.authorization = token;
+        }
+
+        return config;
+      },
+
+      // Intercept 401s and redirect you to login
+      responseError: function (response) {
+
+        if (response.status === 401 || response.status === 403) {
+          $injector.get('$state').go('debt.login');
+          Token.destroy();
+        }
+        return $q.reject(response);
+      }
+
+    };
+
+  }
+
+  angular.module('sistemium.auth')
+    .factory('authInterceptor', authInterceptor);
+
+})();
+
+'use strict';
+
+(function () {
+
+  function AuthService($location,
+                       $http,
+                       $q,
+                       Token,
+                       appConfig,
+                       Util,
+                       Account,
+                       $rootScope) {
+
+    var safeCb = Util.safeCb;
+    var currentUser = {};
+    var userRoles = appConfig.userRoles || [];
+
+    if (Token.get() && $location.path() !== '/logout') {
+      currentUser = Account.find('me');
+      currentUser.then(function (res) {
+        Account.loadRelations(res, ['providerAccount']).then(function () {
+          currentUser = res;
+        });
+        console.log('logged-in', res);
+        $rootScope.$broadcast('logged-in');
+      });
+    }
+
+    var Auth = {
+
+      loginWithMobileNumber: function (mobileNumber) {
+
+        return $http.get('/auth/pha/' + mobileNumber);
+
+      },
+
+      authWithSmsCode: function (id, code) {
+
+        return $http.get('/auth/pha/' + id + '/' + code)
+          .then(function (res) {
+            var token = res.headers('x-access-token');
+            return {
+              token: token,
+              user: res.data
+            };
+          });
+
+      },
+
+      /**
+       * Authenticate user and save token
+       *
+       * @param  {Object}   user     - login info
+       * @param  {Function} callback - optional, function(error, user)
+       * @return {Promise}
+       */
+      login: function (token, callback) {
+        return $http.get('/api/token/' + token, {
+            headers: {
+              'authorization': token
+            }
+          })
+          .then(function (user) {
+            currentUser = user.data;
+            Token.save(token);
+            safeCb(callback)(null, currentUser);
+            $rootScope.$broadcast('logged-in');
+            return currentUser;
+          })
+          .catch(function (err) {
+            Auth.logout();
+            safeCb(callback)(err.data);
+            return $q.reject(err.data);
+          });
+      },
+
+      /**
+       * Delete access token and user info
+       */
+      logout: function () {
+        Token.destroy();
+        currentUser = {};
+        $rootScope.$broadcast('logged-off');
+      },
+
+      /**
+       * Create a new user
+       *
+       * @param  {Object}   user     - user info
+       * @param  {Function} callback - optional, function(error, user)
+       * @return {Promise}
+       */
+      createUser: function (user, callback) {
+        return Account.create(user).then(
+          function (data) {
+            Token.save(data.token);
+            currentUser = Account.find('me');
+            return safeCb(callback)(null, user);
+          },
+          function (err) {
+            Auth.logout();
+            return safeCb(callback)(err);
+          });
+      },
+
+      /**
+       * Gets all available info on a user
+       *   (synchronous|asynchronous)
+       *
+       * @param  {Function|*} callback - optional, funciton(user)
+       * @return {Object|Promise}
+       */
+      getCurrentUser: function (callback) {
+        if (arguments.length === 0) {
+
+          return currentUser;
+        }
+
+        var value = (currentUser.hasOwnProperty('$$state')) ?
+          currentUser : currentUser;
+        return $q.when(value)
+          .then(function (user) {
+            safeCb(callback)(user);
+            return user;
+          }, function () {
+            safeCb(callback)({});
+            return {};
+          });
+      },
+
+      /**
+       * Check if a user is logged in
+       *   (synchronous|asynchronous)
+       *
+       * @param  {Function|*} callback - optional, function(is)
+       * @return {Bool|Promise}
+       */
+      isLoggedIn: function (callback) {
+        if (arguments.length === 0) {
+          return currentUser.hasOwnProperty('roles');
+        }
+
+        return Auth.getCurrentUser(null)
+          .then(function (user) {
+            var is = user.hasOwnProperty('roles');
+            safeCb(callback)(is);
+            return is;
+          });
+      },
+
+      /**
+       * Check if a user has a specified role or higher
+       *   (synchronous|asynchronous)
+       *
+       * @param  {String}     role     - the role to check against
+       * @param  {Function|*} callback - optional, function(has)
+       * @return {Bool|Promise}
+       */
+      hasRole: function (role, callback) {
+        var hasRole = function (r, h) {
+          return userRoles.indexOf(r) >= userRoles.indexOf(h);
+        };
+
+        if (arguments.length < 2) {
+          return hasRole(currentUser.role, role);
+        }
+
+        return Auth.getCurrentUser(null)
+          .then(function (user) {
+            var has = (user.hasOwnProperty('roles')) ?
+              hasRole(user.roles, role) : false;
+            safeCb(callback)(has);
+            return has;
+          });
+      },
+
+      /**
+       * Check if a user is an admin
+       *   (synchronous|asynchronous)
+       *
+       * @param  {Function|*} callback - optional, function(is)
+       * @return {Bool|Promise}
+       */
+      isAdmin: function () {
+        return Auth.hasRole
+          .apply(Auth, [].concat.apply(['admin'], arguments));
+      },
+
+      /**
+       * Get auth token
+       *
+       * @return {String} - a token string used for authenticating
+       */
+      getToken: function () {
+        return Token.get();
+      }
+    };
+
+    return Auth;
+  }
+
+  angular.module('sistemium.auth')
+    .factory('Auth', AuthService);
+
+})();
+
+
+'use strict';
+
+(function() {
+
+angular.module('sistemium.auth')
+  .run(function($rootScope, $state, Auth, sabErrorsService) {
+    // Redirect to login if route requires auth and the user is not logged in, or doesn't have required role
+    $rootScope.$on('$stateChangeStart', function(event, next) {
+      sabErrorsService.clear();
+      if (!next.authenticate) {
+        return;
+      }
+
+      if (typeof next.authenticate === 'string') {
+        Auth.hasRole(next.authenticate, _.noop).then(function (has) {
+          if (has) {
+            return;
+          }
+
+          event.preventDefault();
+          return Auth.isLoggedIn(_.noop).then(function (is) {
+            $state.go(is ? 'main' : 'login');
+          });
+        });
+      } else {
+        Auth.isLoggedIn(_.noop).then(function (is) {
+          if (is) {
+            return;
+          }
+
+          event.preventDefault();
+          $state.go('main');
+        });
+      }
+    });
+  });
+
+})();
+
+'use strict';
+
+(function() {
+
+function TokenStore(localStorageService,$rootScope) {
+
+  var KEY = 'access-token';
+
+  var token = localStorageService.get(KEY);
+
+  $rootScope.$on('logged-off',function(){
+    token = undefined;
+  });
+
+  return {
+    get: function () {
+      return token;
+    },
+
+    save: function (newToken) {
+      token = newToken;
+      localStorageService.set (KEY,newToken);
+    },
+
+    destroy: function () {
+      localStorageService.remove(KEY);
+    }
+
+  };
+
+}
+
+angular.module('sistemium.auth')
+  .service('Token', TokenStore);
+
+})();
+
+'use strict';
+
+(function () {
+
+  /**
+   * The Util service is for thin, globally reusable, utility functions
+   */
+  function UtilService($window) {
+    var Util = {
+      /**
+       * Return a callback or noop function
+       *
+       * @param  {Function|*} cb - a 'potential' function
+       * @return {Function}
+       */
+      safeCb: function (cb) {
+        return (angular.isFunction(cb)) ? cb : angular.noop;
+      },
+
+      /**
+       * Parse a given url with the use of an anchor element
+       *
+       * @param  {String} url - the url to parse
+       * @return {Object}     - the parsed url, anchor element
+       */
+      urlParse: function (url) {
+        var a = document.createElement('a');
+        a.href = url;
+
+        // Special treatment for IE, see http://stackoverflow.com/a/13405933 for details
+        if (a.host === '') {
+          a.href = a.href;
+        }
+
+        return a;
+      },
+
+      /**
+       * Test whether or not a given url is same origin
+       *
+       * @param  {String}           url       - url to test
+       * @param  {String|String[]}  [origins] - additional origins to test against
+       * @return {Boolean}                    - true if url is same origin
+       */
+      isSameOrigin: function (url, origins) {
+        url = Util.urlParse(url);
+        origins = (origins && [].concat(origins)) || [];
+        origins = origins.map(Util.urlParse);
+        origins.push($window.location);
+        origins = origins.filter(function (o) {
+          return url.hostname === o.hostname &&
+            url.port === o.port &&
+            url.protocol === o.protocol;
+        });
+        return (origins.length >= 1);
+      }
+    };
+
+    return Util;
+  }
+
+  angular.module('sistemium.util')
+    .factory('Util', UtilService);
+
+})();
+
+(function (ng) {
+  'use strict';
+  ng.module('sistemium.auth.models')
+    .run(function (Schema, appConfig) {
+      Schema.register({
+        name: 'account',
+        basePath: appConfig.apiUrl,
+        relations: {
+          hasMany: {
+            providerAccount: {
+              localField: 'providers',
+              foreignKey: 'accountId'
+            }
+          }
+        }
+      });
+    })
+  ;
+
+})(angular);
+
+(function (ng) {
+  'use strict';
+  ng.module('sistemium.auth.models')
+    .config(function () {})
+  ;
+
+})(angular);
+
+(function (ng) {
+  'use strict';
+  ng.module('sistemium.auth.models')
+    .constant('appConfig', {
+      apiUrl: ''
+    })
+  ;
+
+})(angular);

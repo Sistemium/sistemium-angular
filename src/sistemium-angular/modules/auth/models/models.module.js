@@ -1,8 +1,6 @@
 (function (ng) {
   'use strict';
 
-  ng.module('sistemium.auth.models', [
-    'sistemium.auth.models.constants'
-  ]);
+  ng.module('sistemium.auth.models', []);
 
 })(angular);
