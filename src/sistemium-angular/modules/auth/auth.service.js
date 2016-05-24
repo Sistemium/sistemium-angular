@@ -199,7 +199,7 @@
     return function (config) {
       Auth.config = config;
       return Auth;
-    }
+    };
   }
 
   angular.module('sistemium.auth')
