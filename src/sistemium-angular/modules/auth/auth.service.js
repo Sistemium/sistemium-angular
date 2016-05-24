@@ -30,13 +30,13 @@
 
       loginWithMobileNumber: function (mobileNumber) {
 
-        return $http.get('/auth/pha/' + mobileNumber);
+        return $http.get(Auth.config.phaUrl + mobileNumber);
 
       },
 
       authWithSmsCode: function (id, code) {
 
-        return $http.get('/auth/pha/' + id + '/' + code)
+        return $http.get(Auth.config.url + '/auth/pha/' + id + '/' + code)
           .then(function (res) {
             var token = res.headers('x-access-token');
             return {
@@ -55,7 +55,7 @@
        * @return {Promise}
        */
       login: function (token, callback) {
-        return $http.get('/api/token/' + token, {
+        return $http.get(Auth.config.url + '/api/token/' + token, {
             headers: {
               'authorization': token
             }
@@ -196,7 +196,10 @@
       }
     };
 
-    return Auth;
+    return function (config) {
+      Auth.config = config;
+      return Auth;
+    }
   }
 
   angular.module('sistemium.auth')
