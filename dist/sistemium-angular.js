@@ -39,16 +39,22 @@
   'use strict';
 
   angular.module('sistemium.auth', [
-      'authApiApp.constants',
+      //'sistemium.constants',
       'sistemium.schema',
       'sistemium.util',
-      'ui.router'
+      'ui.router',
+      'sistemium.auth.services',
+      'sistemium.auth.models'
     ])
     .config(function ($httpProvider) {
       $httpProvider.interceptors.push('saAuthInterceptor');
     })
   ;
 })();
+
+'use strict';
+
+angular.module('sistemium.util', []);
 
 'use strict';
 (function () {
@@ -187,72 +193,12 @@
   })()
 ;
 
-'use strict';
-
-angular.module('sistemium.util', []);
-
 (function (ng) {
   'use strict';
 
-  ng.module('sistemium.auth.models', []);
+  ng.module('sistemium.auth.models', ['sistemium.auth.services']);
 
 })(angular);
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange ($animate,$timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link (scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
-        if ((nv||0) !== (ov||0)) {
-          $animate.addClass(elem,cls).then(function() {
-            $timeout(function() {
-              $animate.removeClass(elem,cls);
-            });
-          });
-        }
-      });
-    }
-
-  }
-
-})();
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-      return {
-        require: 'ngModel',
-        link: function($scope, elem) {
-          var triggerFunc = function() {
-            var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-            if (prev) {
-              ctrl.$setViewValue('');
-              $timeout(function() {
-                ctrl.$setViewValue(prev);
-              });
-            } else {
-              ctrl.$setViewValue(' ');
-            }
-          };
-          elem.bind('click', triggerFunc);
-        }
-      };
-    }]);
-
-}());
 
 (function () {
 
@@ -334,6 +280,62 @@ angular.module('sistemium.util', []);
     .config(['toastrConfig', config]);
 
 })();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange ($animate,$timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link (scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
+        if ((nv||0) !== (ov||0)) {
+          $animate.addClass(elem,cls).then(function() {
+            $timeout(function() {
+              $animate.removeClass(elem,cls);
+            });
+          });
+        }
+      });
+    }
+
+  }
+
+})();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+      return {
+        require: 'ngModel',
+        link: function($scope, elem) {
+          var triggerFunc = function() {
+            var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+            if (prev) {
+              ctrl.$setViewValue('');
+              $timeout(function() {
+                ctrl.$setViewValue(prev);
+              });
+            } else {
+              ctrl.$setViewValue(' ');
+            }
+          };
+          elem.bind('click', triggerFunc);
+        }
+      };
+    }]);
+
+}());
 
 'use strict';
 
@@ -1168,19 +1170,20 @@ angular.module('sistemium.services')
                        $http,
                        $q,
                        saToken,
-                       appConfig,
                        Util,
-                       Account,
+                       Schema,
                        $rootScope) {
 
     var safeCb = Util.safeCb;
     var currentUser = {};
-    var userRoles = appConfig.userRoles || [];
+    var userRoles;
+
+    var Account = Schema.model('saAccount');
 
     if (saToken.get() && $location.path() !== '/logout') {
       currentUser = Account.find('me');
       currentUser.then(function (res) {
-        Account.loadRelations(res, ['providerAccount']).then(function () {
+        Account.loadRelations(res, ['saProviderAccount']).then(function () {
           currentUser = res;
         });
         console.log('logged-in', res);
@@ -1198,7 +1201,7 @@ angular.module('sistemium.services')
 
       authWithSmsCode: function (id, code) {
 
-        return $http.get(Auth.config.url + '/auth/pha/' + id + '/' + code)
+        return $http.get(Auth.config.authUrl + '/auth/pha/' + id + '/' + code)
           .then(function (res) {
             var token = res.headers('x-access-token');
             return {
@@ -1217,7 +1220,7 @@ angular.module('sistemium.services')
        * @return {Promise}
        */
       login: function (token, callback) {
-        return $http.get(Auth.config.url + '/api/token/' + token, {
+        return $http.get(Auth.config.authUrl + '/api/token/' + token, {
             headers: {
               'authorization': token
             }
@@ -1320,6 +1323,7 @@ angular.module('sistemium.services')
        */
       hasRole: function (role, callback) {
         var hasRole = function (r, h) {
+          userRoles = Auth.config.userRoles || [];
           return userRoles.indexOf(r) >= userRoles.indexOf(h);
         };
 
@@ -1366,46 +1370,6 @@ angular.module('sistemium.services')
 
   angular.module('sistemium.auth')
     .factory('saAuth', AuthService);
-
-})();
-
-
-'use strict';
-
-(function() {
-
-angular.module('sistemium.auth')
-  .run(function($rootScope, $state, saAuth, sabErrorsService) {
-    // Redirect to login if route requires auth and the user is not logged in, or doesn't have required role
-    $rootScope.$on('$stateChangeStart', function(event, next) {
-      sabErrorsService.clear();
-      if (!next.authenticate) {
-        return;
-      }
-
-      if (typeof next.authenticate === 'string') {
-        saAuth.hasRole(next.authenticate, _.noop).then(function (has) {
-          if (has) {
-            return;
-          }
-
-          event.preventDefault();
-          return saAuth.isLoggedIn(_.noop).then(function (is) {
-            $state.go(is ? 'main' : 'login');
-          });
-        });
-      } else {
-        saAuth.isLoggedIn(_.noop).then(function (is) {
-          if (is) {
-            return;
-          }
-
-          event.preventDefault();
-          $state.go('main');
-        });
-      }
-    });
-  });
 
 })();
 
@@ -1517,7 +1481,7 @@ angular.module('sistemium.auth')
   ng.module('sistemium.auth.models')
     .run(function (Schema, appConfig) {
       Schema.register({
-        name: 'account',
+        name: 'saAccount',
         basePath: appConfig.apiUrl,
         relations: {
           hasMany: {
@@ -1550,3 +1514,46 @@ angular.module('sistemium.auth')
   ;
 
 })(angular);
+
+(function () {
+  'use strict';
+
+  //TODO models for auth module
+  angular.module('sistemium.auth.models')
+
+    .run(function (Schema, appConfig) {
+      Schema.register({
+        name: 'saProviderAccount',
+        basePath: appConfig.apiUrl
+      });
+    });
+
+})();
+
+'use strict';
+
+angular.module('sistemium.auth.services', ['sistemium.schema'])
+  .service('Schema', function (saSchema,$http) {
+
+    return saSchema({
+
+      getCount: function (params) {
+        var resource = this;
+        var bp = resource.getAdapter('http').defaults.basePath;
+        return $http.get(
+          bp + '/' + resource.endpoint,
+          {
+            params: angular.extend ({'agg:': 'count'}, params || {})
+          }
+        ).then(function (res) {
+          return parseInt (res.headers('x-aggregate-count')) || res.data && res.data.count;
+        });
+      },
+
+      getList: function (params) {
+        return this.findAll (params,{bypassCache:true});
+      }
+
+    });
+
+  });

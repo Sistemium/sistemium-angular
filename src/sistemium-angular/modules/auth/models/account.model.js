@@ -3,7 +3,7 @@
   ng.module('sistemium.auth.models')
     .run(function (Schema, appConfig) {
       Schema.register({
-        name: 'account',
+        name: 'saAccount',
         basePath: appConfig.apiUrl,
         relations: {
           hasMany: {

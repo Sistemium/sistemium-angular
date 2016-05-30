@@ -6,19 +6,20 @@
                        $http,
                        $q,
                        saToken,
-                       appConfig,
                        Util,
-                       Account,
+                       Schema,
                        $rootScope) {
 
     var safeCb = Util.safeCb;
     var currentUser = {};
-    var userRoles = appConfig.userRoles || [];
+    var userRoles;
+
+    var Account = Schema.model('saAccount');
 
     if (saToken.get() && $location.path() !== '/logout') {
       currentUser = Account.find('me');
       currentUser.then(function (res) {
-        Account.loadRelations(res, ['providerAccount']).then(function () {
+        Account.loadRelations(res, ['saProviderAccount']).then(function () {
           currentUser = res;
         });
         console.log('logged-in', res);
@@ -36,7 +37,7 @@
 
       authWithSmsCode: function (id, code) {
 
-        return $http.get(Auth.config.url + '/auth/pha/' + id + '/' + code)
+        return $http.get(Auth.config.authUrl + '/auth/pha/' + id + '/' + code)
           .then(function (res) {
             var token = res.headers('x-access-token');
             return {
@@ -55,7 +56,7 @@
        * @return {Promise}
        */
       login: function (token, callback) {
-        return $http.get(Auth.config.url + '/api/token/' + token, {
+        return $http.get(Auth.config.authUrl + '/api/token/' + token, {
             headers: {
               'authorization': token
             }
@@ -158,6 +159,7 @@
        */
       hasRole: function (role, callback) {
         var hasRole = function (r, h) {
+          userRoles = Auth.config.userRoles || [];
           return userRoles.indexOf(r) >= userRoles.indexOf(h);
         };
 
