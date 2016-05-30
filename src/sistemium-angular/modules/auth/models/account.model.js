@@ -4,6 +4,7 @@
     .run(function (Schema, appConfig) {
       Schema.register({
         name: 'saAccount',
+        endpoint: '/account',
         basePath: appConfig.apiUrl,
         relations: {
           hasMany: {

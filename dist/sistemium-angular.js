@@ -53,10 +53,6 @@
 })();
 
 'use strict';
-
-angular.module('sistemium.util', []);
-
-'use strict';
 (function () {
   angular.module('sistemium.schema', [])
     .service('saSchema', function (DS, $q, saAsync) {
@@ -193,12 +189,72 @@ angular.module('sistemium.util', []);
   })()
 ;
 
+'use strict';
+
+angular.module('sistemium.util', []);
+
 (function (ng) {
   'use strict';
 
   ng.module('sistemium.auth.models', ['sistemium.auth.services']);
 
 })(angular);
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange ($animate,$timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link (scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
+        if ((nv||0) !== (ov||0)) {
+          $animate.addClass(elem,cls).then(function() {
+            $timeout(function() {
+              $animate.removeClass(elem,cls);
+            });
+          });
+        }
+      });
+    }
+
+  }
+
+})();
+
+(function () {
+
+  angular.module('sistemium.directives')
+    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+      return {
+        require: 'ngModel',
+        link: function($scope, elem) {
+          var triggerFunc = function() {
+            var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+            if (prev) {
+              ctrl.$setViewValue('');
+              $timeout(function() {
+                ctrl.$setViewValue(prev);
+              });
+            } else {
+              ctrl.$setViewValue(' ');
+            }
+          };
+          elem.bind('click', triggerFunc);
+        }
+      };
+    }]);
+
+}());
 
 (function () {
 
@@ -280,62 +336,6 @@ angular.module('sistemium.util', []);
     .config(['toastrConfig', config]);
 
 })();
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange ($animate,$timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link (scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function(nv,ov) {
-        if ((nv||0) !== (ov||0)) {
-          $animate.addClass(elem,cls).then(function() {
-            $timeout(function() {
-              $animate.removeClass(elem,cls);
-            });
-          });
-        }
-      });
-    }
-
-  }
-
-})();
-
-(function () {
-
-  angular.module('sistemium.directives')
-    .directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-      return {
-        require: 'ngModel',
-        link: function($scope, elem) {
-          var triggerFunc = function() {
-            var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-            if (prev) {
-              ctrl.$setViewValue('');
-              $timeout(function() {
-                ctrl.$setViewValue(prev);
-              });
-            } else {
-              ctrl.$setViewValue(' ');
-            }
-          };
-          elem.bind('click', triggerFunc);
-        }
-      };
-    }]);
-
-}());
 
 'use strict';
 
@@ -1482,6 +1482,7 @@ angular.module('sistemium.auth')
     .run(function (Schema, appConfig) {
       Schema.register({
         name: 'saAccount',
+        endpoint: '/account',
         basePath: appConfig.apiUrl,
         relations: {
           hasMany: {
