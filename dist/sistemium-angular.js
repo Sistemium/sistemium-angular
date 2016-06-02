@@ -53,10 +53,6 @@
 })();
 
 'use strict';
-
-angular.module('sistemium.util', []);
-
-'use strict';
 (function () {
   angular.module('sistemium.schema', [])
     .service('saSchema', function (DS, $q, saAsync) {
@@ -192,6 +188,10 @@ angular.module('sistemium.util', []);
     });
   })()
 ;
+
+'use strict';
+
+angular.module('sistemium.util', []);
 
 (function (ng) {
   'use strict';
