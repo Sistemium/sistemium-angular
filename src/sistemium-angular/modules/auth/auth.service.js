@@ -62,11 +62,20 @@
             }
           })
           .then(function (user) {
-            currentUser = user.data;
+            var currentUserId = user.data && user.data.tokenInfo && user.data.tokenInfo.id;
             saToken.save(token);
-            safeCb(callback)(null, currentUser);
-            $rootScope.$broadcast('logged-in');
-            return currentUser;
+            Account.find('me')
+              .then(function (account) {
+                currentUser = account;
+                safeCb(callback)(null, currentUser);
+                $rootScope.$broadcast('logged-in');
+                return currentUser;
+              })
+              .catch(function (err) {
+                console.log(err);
+              })
+            ;
+
           })
           .catch(function (err) {
             Auth.logout();
@@ -137,6 +146,7 @@
        * @return {Bool|Promise}
        */
       isLoggedIn: function (callback) {
+
         if (arguments.length === 0) {
           return currentUser.hasOwnProperty('roles');
         }

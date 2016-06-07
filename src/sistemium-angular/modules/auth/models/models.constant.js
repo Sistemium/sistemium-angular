@@ -2,7 +2,7 @@
   'use strict';
   ng.module('sistemium.auth.models')
     .constant('appConfig', {
-      apiUrl: ''
+      apiUrl: 'http://localhost:9080/api/'
     })
   ;
 
