@@ -6,6 +6,7 @@
       'sistemium.schema',
       'sistemium.util',
       'ui.router',
+      'LocalStorageModule',
       'sistemium.auth.services',
       'sistemium.auth.models'
     ])

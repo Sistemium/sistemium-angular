@@ -35,23 +35,6 @@
 
 })(angular);
 
-(function () {
-  'use strict';
-
-  angular.module('sistemium.auth', [
-      //'sistemium.constants',
-      'sistemium.schema',
-      'sistemium.util',
-      'ui.router',
-      'sistemium.auth.services',
-      'sistemium.auth.models'
-    ])
-    .config(function ($httpProvider) {
-      $httpProvider.interceptors.push('saAuthInterceptor');
-    })
-  ;
-})();
-
 'use strict';
 (function () {
   angular.module('sistemium.schema', [])
@@ -188,6 +171,24 @@
     });
   })()
 ;
+
+(function () {
+  'use strict';
+
+  angular.module('sistemium.auth', [
+      //'sistemium.constants',
+      'sistemium.schema',
+      'sistemium.util',
+      'ui.router',
+      'LocalStorageModule',
+      'sistemium.auth.services',
+      'sistemium.auth.models'
+    ])
+    .config(function ($httpProvider) {
+      $httpProvider.interceptors.push('saAuthInterceptor');
+    })
+  ;
+})();
 
 'use strict';
 
@@ -1180,6 +1181,7 @@ angular.module('sistemium.services')
 
     var Account = Schema.model('saAccount');
 
+
     if (saToken.get() && $location.path() !== '/logout') {
       currentUser = Account.find('me');
       currentUser.then(function (res) {
@@ -1493,7 +1495,7 @@ angular.module('sistemium.auth')
       Schema.register({
         name: 'saAccount',
         endpoint: '/account',
-        basePath: appConfig.apiUrl,
+        basePath: appConfig.authApiUrl,
         relations: {
           hasMany: {
             providerAccount: {
@@ -1519,7 +1521,7 @@ angular.module('sistemium.auth')
 (function (ng) {
   'use strict';
   ng.module('sistemium.auth.models')
-    .constant('appConfig', {
+    .constant('saaAppConfig', {
       apiUrl: 'http://localhost:9080/api/'
     })
   ;

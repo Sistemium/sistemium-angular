@@ -5,7 +5,7 @@
       Schema.register({
         name: 'saAccount',
         endpoint: '/account',
-        basePath: appConfig.apiUrl,
+        basePath: appConfig.authApiUrl,
         relations: {
           hasMany: {
             providerAccount: {

@@ -16,6 +16,7 @@
 
     var Account = Schema.model('saAccount');
 
+
     if (saToken.get() && $location.path() !== '/logout') {
       currentUser = Account.find('me');
       currentUser.then(function (res) {
