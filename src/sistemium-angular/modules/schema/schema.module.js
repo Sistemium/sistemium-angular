@@ -82,7 +82,7 @@
 
               if (angular.isFunction(val)) {
                 resource [key] = function () {
-                  return val.apply (this, arguments);
+                  return val.apply (resource, arguments);
                 };
               } else {
                 resource [key] = val;
