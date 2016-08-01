@@ -26,11 +26,18 @@
         });
       }
 
+      function originalFieldsData(fields, data) {
+        return _.pick(data, _.map(fields, function (field) {
+          return field.key;
+        }));
+      }
+
       return {
         getConfigFieldsByKey: getConfig,
         setConfig: setConfig,
         getAll: getAll,
-        getConfigKey: getConfigKey
+        getConfigKey: getConfigKey,
+        originalFieldsData: originalFieldsData
       };
     })
   ;
