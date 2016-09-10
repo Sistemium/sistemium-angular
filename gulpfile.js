@@ -41,8 +41,8 @@ gulp.task('build', function() {
     .pipe(plumber())
     .pipe(concat('sistemium-angular.js'))
     .pipe(gulp.dest('./dist/'))
-    .pipe(uglify())
-    .pipe(rename('sistemium-angular.min.js'))
+    // .pipe(uglify())
+    // .pipe(rename('sistemium-angular.min.js'))
     .pipe(gulp.dest('./dist'));
 
   gulp.src('./bower_components/socket.io-client/socket.io.js')
