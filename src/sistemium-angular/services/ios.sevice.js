@@ -134,7 +134,7 @@
     };
 
     function init(config) {
-      ClientData = config.ClientData;
+      ClientData = _.get(config, 'ClientData');
       return me;
     }
 
