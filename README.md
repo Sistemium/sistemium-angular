@@ -16,7 +16,7 @@ saErrors
 saFormlyConfig
 saHttpStatus
 saMessage
-saNgTable
+saSchema
 
 # Usage
 
