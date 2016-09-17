@@ -14,7 +14,7 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "sistemium-gulp": ">=0.2.0"
+    "sistemium-gulp": "^0.3.0"
   },
   "engines": {
     "node": "^5.4.1",
