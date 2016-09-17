@@ -1,0 +1,22 @@
+{
+  "extends": "eslint:recommended",
+  "plugins": ["angular"],
+  "env": {
+    "browser": true,
+    "jasmine": true
+  },
+  "globals": {
+    "angular": true,
+    "_": true,
+    "UAParser": true,
+    "uuid": true,
+    "debug": true,
+    "moment": true
+  },
+  "rules": {
+  },
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "script"
+  }
+}
