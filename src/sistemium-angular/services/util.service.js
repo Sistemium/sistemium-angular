@@ -59,7 +59,7 @@
     return Util;
   }
 
-  angular.module('sistemium.util')
+  angular.module('sistemium.services')
     .factory('Util', UtilService);
 
 })();

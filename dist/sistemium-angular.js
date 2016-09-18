@@ -1,5 +1,77 @@
 'use strict';
 
+(function (angular) {
+
+  // Create all modules and define dependencies to make sure they exist
+  // and are loaded in the correct order to satisfy dependency injection
+  // before all nested files are concatenated by Gulp
+
+  // Config
+  angular.module('sistemium.config', []).value('sistemium.config', {
+    debug: true
+  });
+
+  // Modules
+  angular.module('sistemium.directives', []);
+  angular.module('sistemium.filters', []);
+  angular.module('sistemium.services', []);
+  angular.module('sistemium.models', []);
+  angular.module('sistemium.schema', []);
+  angular.module('sistemium.dependencies', ['toastr', 'js-data', 'ui.router.stateHelper']);
+  angular.module('sistemium', ['sistemium.dependencies', 'sistemium.config', 'sistemium.directives', 'sistemium.filters', 'sistemium.services', 'sistemium.models', 'sistemium.schema']);
+})(angular);
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+    return {
+      require: 'ngModel',
+      link: function link($scope, elem) {
+        var triggerFunc = function triggerFunc() {
+          var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+          if (prev) {
+            ctrl.$setViewValue('');
+            $timeout(function () {
+              ctrl.$setViewValue(prev);
+            });
+          } else {
+            ctrl.$setViewValue(' ');
+          }
+        };
+        elem.bind('click', triggerFunc);
+      }
+    };
+  }]);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange($animate, $timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link(scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
+        if ((nv || 0) !== (ov || 0)) {
+          $animate.addClass(elem, cls).then(function () {
+            $timeout(function () {
+              $animate.removeClass(elem, cls);
+            });
+          });
+        }
+      });
+    }
+  }
+})();
+
 (function () {
 
   /**
@@ -58,29 +130,8 @@
     return Util;
   }
 
-  angular.module('sistemium.util').factory('Util', UtilService);
+  angular.module('sistemium.services').factory('Util', UtilService);
 })();
-
-(function (angular) {
-
-  // Create all modules and define dependencies to make sure they exist
-  // and are loaded in the correct order to satisfy dependency injection
-  // before all nested files are concatenated by Gulp
-
-  // Config
-  angular.module('sistemium.config', []).value('sistemium.config', {
-    debug: true
-  });
-
-  // Modules
-  angular.module('sistemium.directives', []);
-  angular.module('sistemium.filters', []);
-  angular.module('sistemium.services', []);
-  angular.module('sistemium.models', []);
-  angular.module('sistemium.schema', []);
-  angular.module('sistemium.dependencies', ['toastr', 'js-data', 'ui.router.stateHelper']);
-  angular.module('sistemium', ['sistemium.dependencies', 'sistemium.config', 'sistemium.directives', 'sistemium.filters', 'sistemium.services', 'sistemium.models', 'sistemium.schema']);
-})(angular);
 
 angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
@@ -992,57 +1043,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
   }
 
   angular.module('sistemium.services').service('IOS', IOS);
-})();
-
-(function () {
-
-  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-    return {
-      require: 'ngModel',
-      link: function link($scope, elem) {
-        var triggerFunc = function triggerFunc() {
-          var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-          if (prev) {
-            ctrl.$setViewValue('');
-            $timeout(function () {
-              ctrl.$setViewValue(prev);
-            });
-          } else {
-            ctrl.$setViewValue(' ');
-          }
-        };
-        elem.bind('click', triggerFunc);
-      }
-    };
-  }]);
-})();
-
-(function () {
-
-  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange($animate, $timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link(scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
-        if ((nv || 0) !== (ov || 0)) {
-          $animate.addClass(elem, cls).then(function () {
-            $timeout(function () {
-              $animate.removeClass(elem, cls);
-            });
-          });
-        }
-      });
-    }
-  }
 })();
 
 (function () {
