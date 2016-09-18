@@ -1,8 +1,5 @@
 'use strict';
 
-angular.module('sistemium.util', []);
-'use strict';
-
 (function () {
 
   /**
@@ -63,7 +60,6 @@ angular.module('sistemium.util', []);
 
   angular.module('sistemium.util').factory('Util', UtilService);
 })();
-'use strict';
 
 (function (angular) {
 
@@ -85,7 +81,6 @@ angular.module('sistemium.util', []);
   angular.module('sistemium.dependencies', ['toastr', 'js-data', 'ui.router.stateHelper']);
   angular.module('sistemium', ['sistemium.dependencies', 'sistemium.config', 'sistemium.directives', 'sistemium.filters', 'sistemium.services', 'sistemium.models', 'sistemium.schema']);
 })(angular);
-'use strict';
 
 angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
@@ -237,7 +232,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
   };
 }]);
-'use strict';
 
 (function () {
   angular.module('sistemium.services').service('saSchema', ["DS", "$q", "saAsync", function (DS, $q, saAsync) {
@@ -362,7 +356,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     };
   }]);
 })();
-'use strict';
 
 /**
  * Simple service to activate noty2 message to GUI. This service can be used every where in application. Generally
@@ -460,7 +453,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     return service;
   }]);
 })();
-'use strict';
 
 /**
  * Service to wrap generic HTTP status specified helper methods. Currently this service has
@@ -738,7 +730,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     };
   });
 })();
-'use strict';
 
 (function () {
 
@@ -782,7 +773,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     };
   });
 })();
-'use strict';
 
 (function () {
 
@@ -799,7 +789,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
   angular.module('sistemium.services').service('saDebug', saDebug);
 })();
-'use strict';
 
 (function () {
 
@@ -854,7 +843,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
   angular.module('sistemium.services').service('saAsync', ['$window', '$q', saAsync]);
 })();
-'use strict';
 
 (function () {
 
@@ -1005,7 +993,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
   angular.module('sistemium.services').service('IOS', IOS);
 })();
-'use strict';
 
 (function () {
 
@@ -1030,7 +1017,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     };
   }]);
 })();
-'use strict';
 
 (function () {
 
@@ -1058,7 +1044,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     }
   }
 })();
-'use strict';
 
 (function () {
 
@@ -1081,7 +1066,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
   angular.module('sistemium.dependencies').config(['toastrConfig', config]);
 })();
-'use strict';
 
 (function () {
 
