@@ -3,16 +3,14 @@
 angular.module('sistemium.services')
   .service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
-    var socket = window.io({
-      autoConnect: false,
-      path: '/socket.io-client'
-    });
+    var socket;
 
     var jsDataPrefix;
 
     function init(app) {
-      socket.io.uri = app.url.socket;
-      socket.open();
+      socket = window.io(app.url.socket, {
+        path: '/socket.io-client'
+      });
       jsDataPrefix = app.jsDataPrefix || '';
     }
 
@@ -24,6 +22,9 @@ angular.module('sistemium.services')
         });
       };
       socket.on(eventName, wrappedCallback);
+      if (eventName === 'connect' && socket.connected) {
+        callback.apply(socket);
+      }
       return function unSubscribe() {
         socket.removeListener(eventName, wrappedCallback);
       };
