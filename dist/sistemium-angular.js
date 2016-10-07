@@ -23,57 +23,6 @@
 
 (function () {
 
-  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-    return {
-      require: 'ngModel',
-      link: function link($scope, elem) {
-        var triggerFunc = function triggerFunc() {
-          var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-          if (prev) {
-            ctrl.$setViewValue('');
-            $timeout(function () {
-              ctrl.$setViewValue(prev);
-            });
-          } else {
-            ctrl.$setViewValue(' ');
-          }
-        };
-        elem.bind('click', triggerFunc);
-      }
-    };
-  }]);
-})();
-
-(function () {
-
-  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange($animate, $timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link(scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
-        if ((nv || 0) !== (ov || 0)) {
-          $animate.addClass(elem, cls).then(function () {
-            $timeout(function () {
-              $animate.removeClass(elem, cls);
-            });
-          });
-        }
-      });
-    }
-  }
-})();
-
-(function () {
-
   /**
    * The Util service is for thin, globally reusable, utility functions
    */
@@ -1047,6 +996,57 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
 (function () {
 
+  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+    return {
+      require: 'ngModel',
+      link: function link($scope, elem) {
+        var triggerFunc = function triggerFunc() {
+          var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+          if (prev) {
+            ctrl.$setViewValue('');
+            $timeout(function () {
+              ctrl.$setViewValue(prev);
+            });
+          } else {
+            ctrl.$setViewValue(' ');
+          }
+        };
+        elem.bind('click', triggerFunc);
+      }
+    };
+  }]);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange($animate, $timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link(scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
+        if ((nv || 0) !== (ov || 0)) {
+          $animate.addClass(elem, cls).then(function () {
+            $timeout(function () {
+              $animate.removeClass(elem, cls);
+            });
+          });
+        }
+      });
+    }
+  }
+})();
+
+(function () {
+
   function config(toastrConfig) {
 
     angular.extend(toastrConfig, {
@@ -1102,20 +1102,31 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
         }
       },
 
-      queryTransform: function queryTransform(resourceConfig, params) {
-
-        var res = {};
-        if (params.offset) {
-          res['x-start-page:'] = Math.ceil(params.offset / params.limit);
-        }
-        if (params.limit) {
-          res['x-page-size:'] = params.limit;
-        }
-
-        delete params.limit;
-        delete params.offset;
-        return angular.extend(res, params);
-      }
+      queryTransform: queryTransform
     });
+
+    function queryTransform(resourceConfig, params) {
+
+      var res = {};
+
+      if (params.offset) {
+        res['x-start-page:'] = Math.ceil(params.offset / params.limit);
+      }
+
+      if (params.limit) {
+        res['x-page-size:'] = params.limit;
+      }
+
+      delete params.limit;
+      delete params.offset;
+
+      _.each(params, function (val, param) {
+        if (val === null) {
+          params[param] = '';
+        }
+      });
+
+      return angular.extend(res, params);
+    }
   }]);
 })();

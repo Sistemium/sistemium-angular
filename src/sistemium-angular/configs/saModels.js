@@ -34,21 +34,34 @@
           }
         },
 
-        queryTransform: function queryTransform(resourceConfig, params) {
-
-          var res = {};
-          if (params.offset) {
-            res['x-start-page:'] = Math.ceil(params.offset / params.limit);
-          }
-          if (params.limit) {
-            res['x-page-size:'] = params.limit;
-          }
-
-          delete params.limit;
-          delete params.offset;
-          return angular.extend(res, params);
-        }
+        queryTransform
       });
+
+      function queryTransform(resourceConfig, params) {
+
+        var res = {};
+
+        if (params.offset) {
+          res['x-start-page:'] = Math.ceil(params.offset / params.limit);
+        }
+
+        if (params.limit) {
+          res['x-page-size:'] = params.limit;
+        }
+
+        delete params.limit;
+        delete params.offset;
+
+        _.each(params, (val, param) => {
+          if (val === null) {
+            params[param] = '';
+          }
+        });
+
+        return angular.extend(res, params);
+
+      }
+
     }]);
 
 }());
