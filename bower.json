@@ -3,12 +3,12 @@
   "version": "0.7.4",
   "authors": [
     {
-      "name": "Albert Kovalevskij",
-      "email": "kovalevskij.albert@gmail.com"
-    },
-    {
       "name": "Alexander Levin",
       "email": "alevin.ru@gmail.com"
+    },
+    {
+      "name": "Albert Kovalevskij",
+      "email": "kovalevskij.albert@gmail.com"
     }
   ],
   "main": [
@@ -30,7 +30,8 @@
     "angular-ui-router.stateHelper": "^1.3.1",
     "visionmedia-debug": "^2.2.0",
     "async": "^1.5.2",
-    "js-data-angular": "^3.2.1"
+    "js-data-angular": "^3.2.1",
+    "ua-parser-js": "^0.7.10"
   },
   "devDependencies": {
     "angular-mocks": ">=1.2.0",

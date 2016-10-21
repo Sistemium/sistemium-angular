@@ -82,6 +82,24 @@
   angular.module('sistemium.services').factory('Util', UtilService);
 })();
 
+(function () {
+
+  function saUserAgent() {
+
+    var ua = new UAParser();
+
+    var os = ua.getOS();
+    var cls = os.name ? os.name.replace(' ', '') : '';
+
+    return {
+      os: os,
+      cls: cls
+    };
+  }
+
+  angular.module('sistemium.services').service('saUserAgent', saUserAgent);
+})();
+
 angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
   var socket;
@@ -996,57 +1014,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
 (function () {
 
-  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-    return {
-      require: 'ngModel',
-      link: function link($scope, elem) {
-        var triggerFunc = function triggerFunc() {
-          var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-          if (prev) {
-            ctrl.$setViewValue('');
-            $timeout(function () {
-              ctrl.$setViewValue(prev);
-            });
-          } else {
-            ctrl.$setViewValue(' ');
-          }
-        };
-        elem.bind('click', triggerFunc);
-      }
-    };
-  }]);
-})();
-
-(function () {
-
-  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange($animate, $timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link(scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
-        if ((nv || 0) !== (ov || 0)) {
-          $animate.addClass(elem, cls).then(function () {
-            $timeout(function () {
-              $animate.removeClass(elem, cls);
-            });
-          });
-        }
-      });
-    }
-  }
-})();
-
-(function () {
-
   function config(toastrConfig) {
 
     angular.extend(toastrConfig, {
@@ -1129,4 +1096,55 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       return angular.extend(res, params);
     }
   }]);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+    return {
+      require: 'ngModel',
+      link: function link($scope, elem) {
+        var triggerFunc = function triggerFunc() {
+          var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+          if (prev) {
+            ctrl.$setViewValue('');
+            $timeout(function () {
+              ctrl.$setViewValue(prev);
+            });
+          } else {
+            ctrl.$setViewValue(' ');
+          }
+        };
+        elem.bind('click', triggerFunc);
+      }
+    };
+  }]);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange($animate, $timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link(scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
+        if ((nv || 0) !== (ov || 0)) {
+          $animate.addClass(elem, cls).then(function () {
+            $timeout(function () {
+              $animate.removeClass(elem, cls);
+            });
+          });
+        }
+      });
+    }
+  }
 })();
