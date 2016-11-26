@@ -42,9 +42,9 @@
             var trueName = name.name || name;
             var trueType = name.type || type;
 
-            res [trueName] = function () {
+            _.set(res, trueName, function () {
               return aggregate (trueName) [trueType] (owner[items]);
-            };
+            });
 
           });
 
