@@ -23,7 +23,7 @@
     "**/.*"
   ],
   "dependencies": {
-    "angular": "^1.5.8",
+    "angular": "~1.5.8",
     "angular-toastr": "~1.7.0",
     "js-data": "^2.9.0",
     "node-uuid": "^1.4.7",
