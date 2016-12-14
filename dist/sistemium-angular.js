@@ -307,6 +307,8 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
       return {
 
+        config: config,
+
         register: function register(def) {
 
           var resource = _models[def.name] = DS.defineResource(def);
@@ -327,6 +329,8 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
           resource.agg = aggregator(agg);
 
           _.each(config, function (val, key) {
+
+            if (resource[key]) return;
 
             if (angular.isFunction(val)) {
               resource[key] = function () {
@@ -1107,6 +1111,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       restrict: 'A',
 
       link: function link(scope, element) {
+
         element.on('click', function () {
           if (!$window.getSelection().toString()) {
             // Required for mobile Safari

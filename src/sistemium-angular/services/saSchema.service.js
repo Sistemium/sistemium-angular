@@ -59,6 +59,8 @@
 
         return {
 
+          config: config,
+
           register: function (def) {
 
             var resource = (models [def.name] = DS.defineResource(def));
@@ -79,6 +81,8 @@
             resource.agg = aggregator (agg);
 
             _.each(config,function (val,key){
+
+              if (resource[key]) return;
 
               if (angular.isFunction(val)) {
                 resource [key] = function () {
