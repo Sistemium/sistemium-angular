@@ -4,15 +4,19 @@
 
   function IOS($window, $q, $timeout) {
 
-    var CHECKIN = 'checkin';
-    var CALLBACK = 'iosPhotoCallback';
+    const CHECKIN = 'checkin';
+    const CALLBACK = 'iosPhotoCallback';
+    const deb = $window.debug('stg:IOS');
 
-    var ClientData;
+    const me = {
+      getRoles
+    };
 
-    var messages = {};
-    var id = 0;
+    const messages = {};
 
-    var deb = $window.debug('stg:IOS');
+    let ClientData;
+    let id = 0;
+
 
     function isIos() {
       return !!$window.webkit;
@@ -21,8 +25,8 @@
     function getDevicePlatform() {
       if (isIos() && ClientData) {
         return ClientData.findAll()
-          .then(function(data){
-            return _.get(_.first(data),'devicePlatform') || 'Unknown';
+          .then(function (data) {
+            return _.get(_.first(data), 'devicePlatform') || 'Unknown';
           });
       } else {
         return $q.reject('ClientData not set');
@@ -30,32 +34,34 @@
     }
 
     function handler(name) {
+
       return $window.webkit.messageHandlers[name] || {
-          postMessage: function (options) {
+        postMessage: function (options) {
 
-            if (name === 'roles') {
-              $window[options.callback]([{
-                account: {
-                  name: 'Error'
-                },
-                roles: {
-                  picker: true
-                }
-              }], options);
-            } else {
-              throw new Error(`IOS handler undefined call to: "${name}"`);
-            }
-
+          if (name === 'roles') {
+            $window[options.callback]([{
+              account: {
+                name: 'Error'
+              },
+              roles: {
+                picker: true
+              }
+            }], options);
+          } else {
+            throw new Error(`IOS handler undefined call to: "${name}"`);
           }
-        };
+
+        }
+      };
+
     }
 
     function message(handlerName, cfg) {
 
       return $q(function (resolve, reject) {
-        var requestId = ++id;
+        let requestId = ++id;
 
-        var msg = angular.extend({
+        const msg = angular.extend({
           callback: CALLBACK,
           requestId: requestId,
           options: {
@@ -63,7 +69,7 @@
           }
         }, cfg);
 
-        messages[requestId] = {resolve: resolve,reject: reject, msg: msg};
+        messages[requestId] = {resolve: resolve, reject: reject, msg: msg};
 
         handler(handlerName).postMessage(msg);
 
@@ -80,7 +86,7 @@
 
     $window[CALLBACK] = function (res, req) {
 
-      var msg = messages[req.requestId];
+      const msg = messages[req.requestId];
 
       if (msg) {
         if (angular.isArray(res)) {
@@ -98,6 +104,15 @@
       }
 
     };
+
+    function sendToCameraRoll(image) {
+
+      return message('sendToCameraRoll', {
+        imageID: image.id,
+        imageURL: image.href
+      });
+
+    }
 
     function getPicture(id, size) {
       return message('getPicture', {
@@ -123,15 +138,9 @@
 
     }
 
-    function getRoles () {
+    function getRoles() {
       return message('roles');
     }
-
-    var me = {
-
-      getRoles
-
-    };
 
     function init(config) {
       ClientData = _.get(config, 'ClientData');
@@ -147,7 +156,8 @@
       takePhoto,
       getPicture,
       getDevicePlatform,
-      getRoles
+      getRoles,
+      sendToCameraRoll
 
     };
 

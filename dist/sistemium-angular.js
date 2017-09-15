@@ -252,6 +252,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 }]);
 
 (function () {
+
   angular.module('sistemium.services').service('saSchema', ["DS", "$q", "saAsync", function (DS, $q, saAsync) {
 
     var chunkSize = 6;
@@ -873,13 +874,16 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
     var CHECKIN = 'checkin';
     var CALLBACK = 'iosPhotoCallback';
+    var deb = $window.debug('stg:IOS');
 
-    var ClientData;
+    var me = {
+      getRoles: getRoles
+    };
 
     var messages = {};
-    var id = 0;
 
-    var deb = $window.debug('stg:IOS');
+    var ClientData = void 0;
+    var id = 0;
 
     function isIos() {
       return !!$window.webkit;
@@ -896,6 +900,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     }
 
     function handler(name) {
+
       return $window.webkit.messageHandlers[name] || {
         postMessage: function postMessage(options) {
 
@@ -961,6 +966,14 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       }
     };
 
+    function sendToCameraRoll(image) {
+
+      return message('sendToCameraRoll', {
+        imageID: image.id,
+        imageURL: image.href
+      });
+    }
+
     function getPicture(id, size) {
       return message('getPicture', {
         id: id,
@@ -988,12 +1001,6 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       return message('roles');
     }
 
-    var me = {
-
-      getRoles: getRoles
-
-    };
-
     function init(config) {
       ClientData = _.get(config, 'ClientData');
       return me;
@@ -1008,12 +1015,176 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       takePhoto: takePhoto,
       getPicture: getPicture,
       getDevicePlatform: getDevicePlatform,
-      getRoles: getRoles
+      getRoles: getRoles,
+      sendToCameraRoll: sendToCameraRoll
 
     };
   }
 
   angular.module('sistemium.services').service('IOS', IOS);
+})();
+
+(function () {
+
+  PhotoHelper.$inject = ["IOS", "Schema", "$q", "ConfirmModal", "toastr", "$window"];
+  function PhotoHelper(IOS, Schema, $q, ConfirmModal, toastr, $window) {
+
+    return {
+      makePhoto: makePhoto,
+      takePhoto: takePhoto,
+      importThumbnail: importThumbnail,
+      thumbnailClick: thumbnailClick,
+      pictureClick: pictureClick,
+      getImageSrc: getImageSrc,
+      actingImageSrc: actingImageSrc,
+      setupModel: setupModel
+    };
+
+    function makePhoto(resourceName, data) {
+
+      return IOS.takePhoto(resourceName, data).then(function (res) {
+
+        if (!angular.isObject(res)) {
+          return $q.reject(res);
+        }
+
+        return Schema.model(resourceName).inject(res);
+      });
+    }
+
+    function takePhoto(resourceName, data, thumbnailCache) {
+
+      var q = IOS.takePhoto(resourceName, data);
+
+      return q.then(function (res) {
+
+        if (angular.isObject(res)) {
+
+          importThumbnail(Schema.model(resourceName).inject(res), thumbnailCache);
+          $q.resolve(res);
+        } else {
+          $q.reject(res);
+        }
+      });
+    }
+
+    function importThumbnail(picture, cache) {
+
+      return $q(function (resolve, reject) {
+
+        if (cache[picture.id]) {
+          return resolve(picture);
+        }
+
+        getImageSrc(picture, 'thumbnail').then(function (src) {
+
+          cache[picture.id] = src;
+          resolve(picture);
+        }, reject);
+      });
+    }
+
+    function thumbnailClick(resourceName, pic, src, title) {
+
+      ConfirmModal.show(_.assign(pictureClickConfig(pic, src, title, 'resized'), {
+        deleteDelegate: function deleteDelegate() {
+          return Schema.model(resourceName).destroy(pic);
+        }
+      }), {
+        templateUrl: 'app/components/modal/PictureModal.html',
+        size: 'lg'
+      });
+    }
+
+    function pictureClick(pic) {
+
+      ConfirmModal.show(pictureClickConfig(pic, pic.href, pic.name, 'resized'), {
+        templateUrl: 'app/components/modal/PictureModal.html',
+        size: 'lg'
+      });
+    }
+
+    function pictureClickConfig(pic, src, title, size) {
+
+      return {
+
+        text: false,
+        src: src,
+        title: title,
+
+        resolve: function resolve(ctrl) {
+
+          ctrl.busy = getImageSrc(pic, size).then(function (src) {
+            ctrl.src = src;
+          }, function () {
+
+            // console.log(err);
+            ctrl.cancel();
+            toastr.error('Недоступен интернет', 'Ошибка загрузки изображения');
+          });
+        }
+
+      };
+    }
+
+    function getImageSrc(picture, size) {
+
+      return IOS.isIos() ? IOS.getPicture(picture.id, size).then(function (data) {
+        return 'data:image/jpeg;base64,' + data;
+      }) : $q(function (resolve) {
+        switch (size) {
+          case 'resized':
+            return resolve(picture.href && picture.href.replace(/(.*\/)(.*)(\..{3,4})$/, '$1smallImage$3'));
+          default:
+            return resolve(picture.thumbnailHref);
+        }
+      });
+    }
+
+    function actingImageSrc(picture, size) {
+
+      var srcName = size === 'thumbnail' ? 'thumbnailSrc' : 'smallSrc';
+
+      if (picture[srcName]) {
+        return picture[srcName];
+      }
+
+      if ($window.location.protocol === 'file:') {
+        var path = size === 'thumbnail' ? 'thumbnailPath' : 'resizedImagePath';
+        if (picture[path]) {
+          return '../../../../pictures/' + picture[path];
+        }
+      }
+
+      if (picture.href) {
+        return picture.href.replace(/([^\/]+)(\.[^.]+$)/g, function (match, name, ext) {
+          return size + ext;
+        });
+      }
+
+      return null;
+    }
+
+    function setupModel(model) {
+
+      var computed = model.computed || (model.computed = {});
+
+      _.assign(computed, {
+
+        srcThumbnail: function srcThumbnail() {
+          return actingImageSrc(this, 'thumbnail');
+        },
+        srcFullscreen: function srcFullscreen() {
+          return actingImageSrc(this, 'smallImage');
+        }
+
+      });
+
+      return model;
+    }
+  }
+
+  angular.module('sistemium.services').service('PhotoHelper', PhotoHelper);
 })();
 
 (function () {
