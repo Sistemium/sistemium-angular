@@ -1,8 +1,9 @@
-(function() {
+(function () {
 
   function config(toastrConfig) {
 
-    angular.extend (toastrConfig,{
+    angular.extend(toastrConfig, {
+
       allowHtml: true,
       timeOut: 3000,
       positionClass: 'toast-top-right',
@@ -14,6 +15,7 @@
         success: 'alert alert-success',
         warning: 'alert alert-warning'
       }
+
     });
 
   }

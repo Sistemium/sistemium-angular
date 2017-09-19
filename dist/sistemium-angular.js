@@ -1267,9 +1267,10 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
   function config(toastrConfig) {
 
     angular.extend(toastrConfig, {
+
       allowHtml: true,
       timeOut: 3000,
-      positionClass: 'toast-top-right',
+      // positionClass: 'toast-top-right',
       preventDuplicates: false,
       progressBar: false,
       iconClasses: {
@@ -1278,6 +1279,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
         success: 'alert alert-success',
         warning: 'alert alert-warning'
       }
+
     });
   }
 
