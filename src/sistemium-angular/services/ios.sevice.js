@@ -114,6 +114,14 @@
 
     }
 
+    function loadImage(image) {
+
+      return message('loadImage', {
+        imageID: image.id
+      });
+
+    }
+
     function getPicture(id, size) {
       return message('getPicture', {
         id: id,
@@ -157,7 +165,8 @@
       getPicture,
       getDevicePlatform,
       getRoles,
-      sendToCameraRoll
+      sendToCameraRoll,
+      loadImage
 
     };
 
