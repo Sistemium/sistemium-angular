@@ -974,6 +974,13 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       });
     }
 
+    function loadImage(image) {
+
+      return message('loadImage', {
+        imageID: image.id
+      });
+    }
+
     function getPicture(id, size) {
       return message('getPicture', {
         id: id,
@@ -1016,7 +1023,8 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       getPicture: getPicture,
       getDevicePlatform: getDevicePlatform,
       getRoles: getRoles,
-      sendToCameraRoll: sendToCameraRoll
+      sendToCameraRoll: sendToCameraRoll,
+      loadImage: loadImage
 
     };
   }
@@ -1270,7 +1278,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
       allowHtml: true,
       timeOut: 3000,
-      // positionClass: 'toast-top-right',
+      positionClass: 'toast-top-right',
       preventDuplicates: false,
       progressBar: false,
       iconClasses: {
