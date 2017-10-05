@@ -136,6 +136,14 @@
       });
     }
 
+    function saveImage(entityName, data, imageData) {
+      return message('saveImage', {
+        entityName,
+        data,
+        imageData
+      });
+    }
+
     function copyToClipboard(text) {
       return message('copyToClipboard', {
         text:text
@@ -173,6 +181,7 @@
       getRoles,
       sendToCameraRoll,
       loadImage,
+      saveImage,
       copyToClipboard
     };
 
