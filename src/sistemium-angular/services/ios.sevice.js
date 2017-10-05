@@ -136,6 +136,12 @@
       });
     }
 
+    function copyToClipboard(text) {
+      return message('copyToClipboard', {
+        text:text
+      });
+    }
+
     function checkIn(accuracy, data, timeout) {
 
       return message(CHECKIN, {
@@ -166,8 +172,8 @@
       getDevicePlatform,
       getRoles,
       sendToCameraRoll,
-      loadImage
-
+      loadImage,
+      copyToClipboard
     };
 
   }
