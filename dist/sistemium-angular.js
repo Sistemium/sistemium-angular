@@ -883,7 +883,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     var messages = {};
 
     var ClientData = void 0;
-    var id = 0;
+    var requestIdCounter = 0;
 
     function isIos() {
       return !!$window.webkit;
@@ -923,14 +923,15 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     function message(handlerName, cfg) {
 
       return $q(function (resolve, reject) {
-        var requestId = ++id;
 
-        var msg = angular.extend({
-          callback: CALLBACK,
+        requestIdCounter = requestIdCounter + 2;
+
+        var requestId = requestIdCounter;
+
+        var msg = _.assign({
           requestId: requestId,
-          options: {
-            requestId: requestId
-          }
+          callback: CALLBACK,
+          options: { requestId: requestId }
         }, cfg);
 
         messages[requestId] = { resolve: resolve, reject: reject, msg: msg };
@@ -938,7 +939,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
         handler(handlerName).postMessage(msg);
 
         if (cfg && cfg.timeout) {
-          $timeout(function () {
+          $timeout().then(function () {
             delete messages[requestId];
             reject({ error: handlerName + ' request timeout' });
           }, cfg.timeout);
@@ -946,25 +947,40 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       });
     }
 
-    $window[CALLBACK] = function (res, req) {
+    function messageCallback(res, req) {
 
       var msg = messages[req.requestId];
 
-      if (msg) {
-        if (angular.isArray(res)) {
-          $timeout(function () {
-            deb('resolve', req, res);
-            msg.resolve(res[0]);
-          });
-        } else {
-          $timeout(function () {
-            deb('reject', req, res);
-            msg.reject(res || 'Response is not array');
-          });
-        }
-        delete messages[req.requestId];
+      if (!msg) {
+        return;
       }
-    };
+
+      var status = req.status;
+
+
+      if (!status) {
+        status = _.isArray(res) ? 'resolve' : 'reject';
+      }
+
+      deb(status, req, res);
+
+      if (status === 'resolve') {
+        res = _.isArray(res) ? _.first(res) : res;
+      }
+
+      msg[status](res);
+
+      delete messages[req.requestId];
+    }
+
+    $window[CALLBACK] = messageCallback;
+
+    function iosCallback(status, data, req) {
+
+      req.status = status;
+
+      return messageCallback(data, req);
+    }
 
     function sendToCameraRoll(image) {
 
@@ -992,6 +1008,20 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       return message('takePhoto', {
         entityName: entity,
         data: data
+      });
+    }
+
+    function saveImage(entityName, data, imageData) {
+      return message('saveImage', {
+        entityName: entityName,
+        data: data,
+        imageData: imageData
+      });
+    }
+
+    function copyToClipboard(text) {
+      return message('copyToClipboard', {
+        text: text
       });
     }
 
@@ -1024,7 +1054,11 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       getDevicePlatform: getDevicePlatform,
       getRoles: getRoles,
       sendToCameraRoll: sendToCameraRoll,
-      loadImage: loadImage
+      loadImage: loadImage,
+      saveImage: saveImage,
+      copyToClipboard: copyToClipboard,
+
+      iosCallback: iosCallback
 
     };
   }
