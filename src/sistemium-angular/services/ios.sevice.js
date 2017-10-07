@@ -15,7 +15,7 @@
     const messages = {};
 
     let ClientData;
-    let id = 0;
+    let requestIdCounter = 0;
 
 
     function isIos() {
@@ -59,14 +59,15 @@
     function message(handlerName, cfg) {
 
       return $q(function (resolve, reject) {
-        let requestId = ++id;
 
-        const msg = angular.extend({
+        requestIdCounter = requestIdCounter + 2;
+
+        let requestId = requestIdCounter;
+
+        const msg = _.assign({
+          requestId,
           callback: CALLBACK,
-          requestId: requestId,
-          options: {
-            requestId: requestId
-          }
+          options: {requestId}
         }, cfg);
 
         messages[requestId] = {resolve: resolve, reject: reject, msg: msg};
@@ -74,36 +75,55 @@
         handler(handlerName).postMessage(msg);
 
         if (cfg && cfg.timeout) {
-          $timeout(function () {
-            delete messages[requestId];
-            reject({error: handlerName + ' request timeout'});
-          }, cfg.timeout);
+          $timeout()
+            .then(() => {
+              delete messages[requestId];
+              reject({error: handlerName + ' request timeout'});
+            }, cfg.timeout);
         }
 
       });
 
     }
 
-    $window[CALLBACK] = function (res, req) {
+    function messageCallback(res, req) {
 
       const msg = messages[req.requestId];
 
-      if (msg) {
-        if (angular.isArray(res)) {
-          $timeout(function () {
-            deb('resolve', req, res);
-            msg.resolve(res[0]);
-          });
-        } else {
-          $timeout(function () {
-            deb('reject', req, res);
-            msg.reject(res || 'Response is not array');
-          });
-        }
-        delete messages[req.requestId];
+      if (!msg) {
+        return;
       }
 
-    };
+      let {status} = req;
+
+      if (!status) {
+        status = _.isArray(res) ? 'resolve' : 'reject';
+      }
+
+      deb(status, req, res);
+
+      if (status === 'resolve') {
+        res = _.isArray(res) ? _.first(res) : res;
+      }
+
+      msg[status](res);
+
+      delete messages[req.requestId];
+
+    }
+
+
+    $window[CALLBACK] = messageCallback;
+
+
+    function iosCallback(status, data, req) {
+
+      req.status = status;
+
+      return messageCallback(data, req);
+
+    }
+
 
     function sendToCameraRoll(image) {
 
@@ -146,7 +166,7 @@
 
     function copyToClipboard(text) {
       return message('copyToClipboard', {
-        text:text
+        text: text
       });
     }
 
@@ -182,7 +202,10 @@
       sendToCameraRoll,
       loadImage,
       saveImage,
-      copyToClipboard
+      copyToClipboard,
+
+      iosCallback
+
     };
 
   }
