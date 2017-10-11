@@ -75,11 +75,11 @@
         handler(handlerName).postMessage(msg);
 
         if (cfg && cfg.timeout) {
-          $timeout()
+          $timeout(cfg.timeout)
             .then(() => {
               delete messages[requestId];
               reject({error: handlerName + ' request timeout'});
-            }, cfg.timeout);
+            });
         }
 
       });
