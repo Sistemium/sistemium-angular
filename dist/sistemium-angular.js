@@ -939,10 +939,10 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
         handler(handlerName).postMessage(msg);
 
         if (cfg && cfg.timeout) {
-          $timeout().then(function () {
+          $timeout(cfg.timeout).then(function () {
             delete messages[requestId];
             reject({ error: handlerName + ' request timeout' });
-          }, cfg.timeout);
+          });
         }
       });
     }
