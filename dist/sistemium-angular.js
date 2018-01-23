@@ -164,19 +164,19 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
   function emitQ(eventName, data) {
 
-    var q = $q.defer();
+    return $q(function (resolve, reject) {
 
-    emit(eventName, data, function (reply) {
-      if (!reply) {
-        q.resolve();
-      } else if (reply.data) {
-        q.resolve(reply.data);
-      } else if (reply.error) {
-        q.reject(reply);
-      }
+      emit(eventName, data, function (reply) {
+
+        if (!reply) {
+          resolve();
+        } else if (reply.data) {
+          resolve(reply.data);
+        } else if (reply.error) {
+          reject(reply);
+        }
+      });
     });
-
-    return q.promise;
   }
 
   var subscriptions = [];
@@ -1275,6 +1275,30 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       }
     };
   }]);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saEnterKey', saEnterKeyDirective);
+
+  function saEnterKeyDirective() {
+
+    return function (scope, element, attrs) {
+
+      element.bind('keydown keypress', onKeyPress);
+
+      function onKeyPress(e) {
+
+        if (e.which === 13) {
+
+          e.preventDefault();
+          scope.$apply(function () {
+            return scope.$eval(attrs.saEnterKey);
+          });
+        }
+      }
+    };
+  }
 })();
 
 (function () {
