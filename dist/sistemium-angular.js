@@ -1293,7 +1293,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
           e.preventDefault();
           scope.$apply(function () {
-            return scope.$eval(attrs.saEnterKey);
+            return scope.$eval(attrs.saEnterKey, { '$event': e });
           });
         }
       }

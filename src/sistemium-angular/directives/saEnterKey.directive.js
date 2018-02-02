@@ -15,7 +15,7 @@
         if (e.which === 13) {
 
           e.preventDefault();
-          scope.$apply(() => scope.$eval(attrs.saEnterKey));
+          scope.$apply(() => scope.$eval(attrs.saEnterKey, {'$event': e}));
 
         }
 
