@@ -10,12 +10,12 @@
 
       element.bind('keydown keypress', onKeyPress);
 
-      function onKeyPress(e) {
+      function onKeyPress($event) {
 
-        if (e.which === 13) {
+        if ($event.which === 13) {
 
-          e.preventDefault();
-          scope.$apply(() => scope.$eval(attrs.saEnterKey, {'$event': e}));
+          $event.preventDefault();
+          scope.$apply(() => scope.$eval(attrs.saEnterKey, {$event, $element: element[0]}));
 
         }
 

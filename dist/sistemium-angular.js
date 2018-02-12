@@ -1287,13 +1287,13 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
       element.bind('keydown keypress', onKeyPress);
 
-      function onKeyPress(e) {
+      function onKeyPress($event) {
 
-        if (e.which === 13) {
+        if ($event.which === 13) {
 
-          e.preventDefault();
+          $event.preventDefault();
           scope.$apply(function () {
-            return scope.$eval(attrs.saEnterKey, { '$event': e });
+            return scope.$eval(attrs.saEnterKey, { $event: $event, $element: element[0] });
           });
         }
       }
