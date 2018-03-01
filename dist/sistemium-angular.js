@@ -799,6 +799,71 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
 (function () {
 
+  saEtc.$inject = ["$window", "$timeout", "$rootScope"];
+  function saEtc($window, $timeout, $rootScope) {
+
+    function debounce(fn, timeout) {
+      var scope = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : $rootScope;
+
+      return _.debounce(function () {
+
+        var args = arguments;
+
+        scope.$applyAsync(function () {
+          fn.apply(null, args);
+        });
+      }, timeout);
+    }
+
+    function blurActive() {
+      return _.result($window.document, 'activeElement.blur');
+    }
+
+    function focusElementById(id, timeout) {
+      $timeout(function () {
+
+        var element = $window.document.getElementById(id);
+        if (element) {
+          element.focus();
+        }
+      }, timeout || 0);
+    }
+
+    function getElementById(id) {
+      return $window.document.getElementById(id);
+    }
+
+    function scrolTopElementById(id) {
+      var element = getElementById(id);
+      if (!element) {
+        return;
+      }
+      element.scrollTop = 0;
+    }
+
+    function scrollBottomElementById(id) {
+      var element = getElementById(id);
+      if (!element) {
+        return;
+      }
+      element.scrollTop = element.scrollHeight;
+    }
+
+    return {
+      debounce: debounce,
+      scrolTopElementById: scrolTopElementById,
+      getElementById: getElementById,
+      blurActive: blurActive,
+      focusElementById: focusElementById,
+      scrollBottomElementById: scrollBottomElementById
+    };
+  }
+
+  angular.module('sistemium.services').service('saEtc', saEtc);
+})();
+
+(function () {
+
   function saDebug() {
 
     function log(ns) {
@@ -1299,6 +1364,53 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       }
     };
   }
+})();
+
+(function () {
+
+  saAutoFocus.$inject = ["$timeout", "IOS"];
+  function saAutoFocus($timeout, IOS) {
+
+    var ios = IOS.isIos();
+
+    return {
+
+      restrict: 'AC',
+
+      scope: {
+        saAutoFocus: '@'
+      },
+
+      link: function link(_scope, _element) {
+
+        var value = _scope.saAutoFocus;
+        var element = _element[0];
+
+        if (value === 'false' || ios) {
+          return;
+        }
+
+        $timeout(100).then(function () {
+          element.focus();
+          if (value === 'select') {
+            element.setSelectionRange(0, element.value.length);
+          }
+        });
+
+        if (_scope.saAutoFocus !== 'true') {
+          return;
+        }
+
+        _element.bind('blur', function () {
+          $timeout(100).then(function () {
+            return element.focus();
+          });
+        });
+      }
+    };
+  }
+
+  angular.module('sistemium.directives').directive('saAutoFocus', saAutoFocus);
 })();
 
 (function () {
