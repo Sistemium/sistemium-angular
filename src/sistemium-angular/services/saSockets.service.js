@@ -65,20 +65,24 @@ angular.module('sistemium.services')
 
     function emitQ (eventName, data) {
 
-      var q = $q.defer();
+      return $q((resolve, reject) => {
 
-      emit (eventName, data, function (reply) {
-        if (!reply) {
-          q.resolve();
-        } else if (reply.data) {
-          q.resolve(reply.data);
-        } else if (reply.error) {
-          q.reject(reply);
-        }
+        emit (eventName, data, reply => {
+
+          if (!reply) {
+            resolve();
+          } else if (reply.data) {
+            resolve(reply.data);
+          } else if (reply.error) {
+            reject(reply);
+          }
+
+        });
+
       });
 
-      return q.promise;
-    }
+
+  }
 
     var subscriptions = [];
 
