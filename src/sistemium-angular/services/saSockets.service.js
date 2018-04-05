@@ -3,9 +3,9 @@
 angular.module('sistemium.services')
   .service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
-    var socket;
+    let socket;
 
-    var jsDataPrefix;
+    let jsDataPrefix;
 
     function init(app) {
       socket = window.io(app.url.socket, {
