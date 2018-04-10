@@ -102,9 +102,9 @@
 
 angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
-  var socket;
+  var socket = void 0;
 
-  var jsDataPrefix;
+  var jsDataPrefix = void 0;
 
   function init(app) {
     socket = window.io(app.url.socket, {
@@ -849,7 +849,60 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       element.scrollTop = element.scrollHeight;
     }
 
+    function setCookie(name, value) {
+      var props = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+
+      var exp = props.expires;
+
+      if (_.isNumber(exp) && exp) {
+
+        var d = new Date();
+
+        d.setTime(d.getTime() + exp * 1000);
+
+        exp = props.expires = d;
+      }
+
+      if (exp && exp.toUTCString) {
+        props.expires = exp.toUTCString();
+      }
+
+      value = $window.encodeURIComponent(value);
+
+      var updatedCookie = name + "=" + value;
+
+      _.each(props, function (propValue, propName) {
+
+        updatedCookie += "; " + propName;
+
+        if (propValue !== true) {
+          updatedCookie += "=" + propValue;
+        }
+      });
+
+      $window.document.cookie = updatedCookie;
+    }
+
+    function getCookie(name) {
+
+      var preRe = '(?:^|; )' + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)';
+      var matches = document.cookie.match(new RegExp(preRe));
+
+      if (matches) {
+        return $window.decodeURIComponent(matches[1]);
+      }
+    }
+
+    function deleteCookie(name) {
+
+      setCookie(name, null, { expires: -1 });
+    }
+
     return {
+      getCookie: getCookie,
+      setCookie: setCookie,
+      deleteCookie: deleteCookie,
       debounce: debounce,
       scrolTopElementById: scrolTopElementById,
       getElementById: getElementById,
@@ -1314,19 +1367,35 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
 (function () {
 
-  selectOnFocus.$inject = ["$window"];
-  function selectOnFocus($window) {
+  selectOnFocus.$inject = ["$window", "$timeout"];
+  function selectOnFocus($window, $timeout) {
     return {
 
       restrict: 'A',
 
       link: function link(scope, element) {
 
-        element.on('click', function () {
-          if (!$window.getSelection().toString()) {
-            // Required for mobile Safari
-            this.setSelectionRange(0, this.value.length);
+        var focused = false;
+
+        element.on('focus', function () {
+          var _this = this;
+
+          if (focused) {
+            return;
           }
+
+          focused = true;
+
+          $timeout(100).then(function () {
+            if (!$window.getSelection().toString()) {
+              // Required for mobile Safari
+              _this.setSelectionRange(0, _this.value.length);
+            }
+          });
+        });
+
+        element.on('blur', function () {
+          focused = false;
         });
       }
 
@@ -1375,8 +1444,8 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
         if ($event.which === 13) {
 
           $event.preventDefault();
-          scope.$apply(function () {
-            return scope.$eval(attrs.saEnterKey, { $event: $event, $element: element[0] });
+          scope.$applyAsync(function () {
+            scope.$eval(attrs.saEnterKey, { $event: $event, $element: element[0] });
           });
         }
       }
