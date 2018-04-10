@@ -102,9 +102,9 @@
 
 angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
 
-  var socket;
+  var socket = void 0;
 
-  var jsDataPrefix;
+  var jsDataPrefix = void 0;
 
   function init(app) {
     socket = window.io(app.url.socket, {
