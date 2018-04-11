@@ -1003,8 +1003,10 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     var ClientData = void 0;
     var requestIdCounter = 0;
 
+    var messageHandlers = _.get($window, 'stmAndroid') || _.get($window, 'webkit.messageHandlers');
+
     function isIos() {
-      return !!$window.webkit;
+      return !!$window.webkit || !!$window.stmAndroid;
     }
 
     function getDevicePlatform() {
@@ -1019,7 +1021,23 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
     function handler(name) {
 
-      return $window.webkit.messageHandlers[name] || {
+      if (messageHandlers && messageHandlers[name] && messageHandlers[name].postMessage) {
+
+        return messageHandlers[name];
+      }
+
+      if (messageHandlers[name]) {
+
+        return {
+          postMessage: function postMessage(options) {
+
+            var jsonOptions = options ? JSON.stringify(options) : undefined;
+
+            messageHandlers[name](jsonOptions);
+          } };
+      }
+
+      return {
         postMessage: function postMessage(options) {
 
           if (name === 'roles') {

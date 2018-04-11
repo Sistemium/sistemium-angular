@@ -17,9 +17,10 @@
     let ClientData;
     let requestIdCounter = 0;
 
+    const messageHandlers = _.get($window, 'stmAndroid') || _.get($window, 'webkit.messageHandlers');
 
     function isIos() {
-      return !!$window.webkit;
+      return !!$window.webkit || !!$window.stmAndroid;
     }
 
     function getDevicePlatform() {
@@ -35,7 +36,26 @@
 
     function handler(name) {
 
-      return $window.webkit.messageHandlers[name] || {
+      if (messageHandlers && messageHandlers[name] && messageHandlers[name].postMessage){
+
+        return messageHandlers[name];
+
+      }
+
+      if (messageHandlers[name]){
+
+        return {
+          postMessage: function (options) {
+
+            let jsonOptions = options ? JSON.stringify(options) : undefined;
+
+            messageHandlers[name](jsonOptions)
+
+          }}
+
+      }
+
+      return {
         postMessage: function (options) {
 
           if (name === 'roles') {
