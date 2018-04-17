@@ -120,7 +120,7 @@
 
     function getImageSrc(picture, size) {
 
-      return IOS.isIos() ? IOS.getPicture(picture.id, size)
+      return IOS.supportsPictures() ? IOS.getPicture(picture.id, size)
           .then(function (data) {
             return 'data:image/jpeg;base64,' + data;
           }) : $q(function (resolve) {
