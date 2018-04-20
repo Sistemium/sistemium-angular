@@ -1009,6 +1009,14 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       return !!$window.webkit || !!$window.stmAndroid;
     }
 
+    function supportsPictures() {
+      return !!$window.webkit;
+    }
+
+    function supportsPhotos() {
+      return !!$window.webkit;
+    }
+
     function getDevicePlatform() {
       if (isIos() && ClientData) {
         return ClientData.findAll().then(function (data) {
@@ -1182,6 +1190,8 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
     return {
 
       init: init,
+      supportsPictures: supportsPictures,
+      supportsPhotos: supportsPhotos,
       isIos: isIos,
       handler: handler,
       checkIn: checkIn,
@@ -1307,7 +1317,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
     function getImageSrc(picture, size) {
 
-      return IOS.isIos() ? IOS.getPicture(picture.id, size).then(function (data) {
+      return IOS.supportsPictures() ? IOS.getPicture(picture.id, size).then(function (data) {
         return 'data:image/jpeg;base64,' + data;
       }) : $q(function (resolve) {
         switch (size) {

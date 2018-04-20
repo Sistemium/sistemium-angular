@@ -23,6 +23,14 @@
       return !!$window.webkit || !!$window.stmAndroid;
     }
 
+    function supportsPictures() {
+      return !!$window.webkit;
+    }
+
+    function supportsPhotos() {
+      return !!$window.webkit;
+    }
+
     function getDevicePlatform() {
       if (isIos() && ClientData) {
         return ClientData.findAll()
@@ -212,6 +220,8 @@
     return {
 
       init,
+      supportsPictures,
+      supportsPhotos,
       isIos,
       handler,
       checkIn,
