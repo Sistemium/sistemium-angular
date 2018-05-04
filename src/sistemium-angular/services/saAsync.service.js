@@ -4,7 +4,9 @@
 
   function saAsync ($window,$q) {
 
-    var async = $window.async;
+    var asyncSeries = $window.async.series;
+
+    $window.async = null;
 
     function chunkSerial (chunkSize, data, datumFn, onChunkSuccessFn, onChunkErrorFn) {
 
@@ -36,7 +38,7 @@
       });
 
       return $q(function(resolve,reject){
-        async.series(series,function(err,results) {
+        asyncSeries(series,function(err,results) {
 
           if (err) {
             reject(err);
@@ -48,9 +50,9 @@
       });
     }
 
-    return angular.extend (async,{
+    return {
       chunkSerial: chunkSerial
-    });
+    };
 
   }
 

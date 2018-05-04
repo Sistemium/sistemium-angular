@@ -935,7 +935,9 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
   function saAsync($window, $q) {
 
-    var async = $window.async;
+    var asyncSeries = $window.async.series;
+
+    $window.async = null;
 
     function chunkSerial(chunkSize, data, datumFn, onChunkSuccessFn, onChunkErrorFn) {
 
@@ -966,7 +968,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       });
 
       return $q(function (resolve, reject) {
-        async.series(series, function (err, results) {
+        asyncSeries(series, function (err, results) {
 
           if (err) {
             reject(err);
@@ -977,9 +979,9 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
       });
     }
 
-    return angular.extend(async, {
+    return {
       chunkSerial: chunkSerial
-    });
+    };
   }
 
   angular.module('sistemium.services').service('saAsync', ['$window', '$q', saAsync]);
@@ -1472,7 +1474,7 @@ angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', f
 
     return {
 
-      restrict: 'AC',
+      restrict: 'A',
 
       scope: {
         saAutoFocus: '@'
