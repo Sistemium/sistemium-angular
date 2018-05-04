@@ -8,7 +8,7 @@
 
     return {
 
-      restrict: 'AC',
+      restrict: 'A',
 
       scope: {
         saAutoFocus: '@'
