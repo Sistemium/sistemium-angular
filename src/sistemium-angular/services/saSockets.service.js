@@ -1,7 +1,12 @@
 'use strict';
 
-angular.module('sistemium.services')
-  .service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
+(function () {
+
+  angular.module('sistemium.services')
+    .service('saSockets', ['$rootScope', '$q', saSockets]);
+
+
+  function saSockets($rootScope, $q) {
 
     let socket;
 
@@ -14,60 +19,79 @@ angular.module('sistemium.services')
       jsDataPrefix = app.jsDataPrefix || '';
     }
 
-    function wrappedOn (eventName, callback) {
-      var wrappedCallback = function () {
-        var args = arguments;
+    function wrappedOn(eventName, callback) {
+
+      function wrappedCallback() {
+
+        let args = arguments;
+
         $rootScope.$apply(function () {
           callback.apply(socket, args);
         });
-      };
+
+      }
+
       socket.on(eventName, wrappedCallback);
+
       if (eventName === 'connect' && socket.connected) {
         callback.apply(socket);
       }
+
       return function unSubscribe() {
         socket.removeListener(eventName, wrappedCallback);
       };
+
     }
 
-    function emit (eventName, data, callback) {
+    function emit(eventName, data, callback) {
 
-      if ((angular.isFunction(data)) && !callback) {
+      if (angular.isFunction(data) && !callback) {
+
         if (!socket.connected) {
           return data.apply(socket, [{
             error: 'Нет подключения к серверу'
           }]);
         }
+
         socket.emit(eventName, function () {
-          var args = arguments;
+
+          let args = arguments;
+
           $rootScope.$apply(function () {
             if (data) {
               data.apply(socket, args);
             }
           });
+
         });
+
       } else {
+
         // if (!socket.connected) {
         //   return callback && callback.apply(socket, [{
         //     error: 'Нет подключения к серверу'
         //   }]);
         // }
+
         socket.emit(eventName, data, function () {
-          var args = arguments;
+
+          let args = arguments;
+
           $rootScope.$apply(function () {
             if (callback) {
               callback.apply(socket, args);
             }
           });
+
         });
       }
     }
 
-    function emitQ (eventName, data) {
+    function emitQ(eventName, data) {
 
       return $q((resolve, reject) => {
 
-        emit (eventName, data, reply => {
+        emit(eventName, data, reply => {
 
           if (!reply) {
             resolve();
@@ -82,53 +106,53 @@ angular.module('sistemium.services')
       });
 
 
-  }
+    }
 
-    var subscriptions = [];
+    const subscriptions = [];
 
-    function onJsData (event,callback) {
+    function onJsData(event, callback) {
 
-      return wrappedOn (event, function (msg) {
+      return wrappedOn(event, function (msg) {
 
         if (angular.isString(msg.resource)) {
-          msg.resource = msg.resource.replace(jsDataPrefix,'');
+          msg.resource = msg.resource.replace(jsDataPrefix, '');
         }
 
-        callback (msg);
+        callback(msg);
 
       });
 
     }
 
-    function jsDataSubscribe (filter) {
+    function jsDataSubscribe(filter) {
 
-      var subscription = {
+      let subscription = {
         id: true,
         originalFilter: filter,
-        filter: _.map(filter,function (f) {
+        filter: _.map(filter, function (f) {
           return jsDataPrefix + f;
         })
       };
 
-      subscriptions.push (subscription);
+      subscriptions.push(subscription);
 
-      emitQ ('jsData:subscribe', subscription.filter)
-        .then(function(id){
+      emitQ('jsData:subscribe', subscription.filter)
+        .then(function (id) {
           subscription.id = id;
         });
 
       return function () {
         if (subscription.id) {
-          emit ('jsData:unsubscribe', subscription.id);
-          subscriptions.splice (subscriptions.indexOf(subscription),1);
+          emit('jsData:unsubscribe', subscription.id);
+          subscriptions.splice(subscriptions.indexOf(subscription), 1);
         }
       };
 
     }
 
-    $rootScope.$on('$destroy', $rootScope.$on('socket:authorized',function(){
+    $rootScope.$on('$destroy', $rootScope.$on('socket:authorized', function () {
 
-      _.each(subscriptions,function (subscription) {
+      _.each(subscriptions, function (subscription) {
         if (subscription.id) {
           emitQ('jsData:subscribe', subscription.filter)
             .then(function (id) {
@@ -142,24 +166,21 @@ angular.module('sistemium.services')
 
     return {
 
-      io: socket,
+      // io: socket,
 
-      init: init,
-      emit: emit,
-      emitQ: emitQ,
+      init,
+      emit,
+      emitQ,
       on: wrappedOn,
 
-      jsDataSubscribe: jsDataSubscribe,
+      jsDataSubscribe,
       onJsData: onJsData,
 
-      removeAllListeners: function () {
-        socket.removeAllListeners();
-      },
-
-      removeListener: function (event, fn) {
-        socket.removeListener(event, fn);
-      }
+      removeAllListeners: () => socket.removeAllListeners(),
+      removeListener: (event, fn) => socket.removeListener(event, fn)
 
     };
 
-  }]);
+  }
+
+})();

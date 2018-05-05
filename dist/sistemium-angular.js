@@ -100,156 +100,174 @@
   angular.module('sistemium.services').service('saUserAgent', saUserAgent);
 })();
 
-angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', function ($rootScope, $q) {
+(function () {
 
-  var socket = void 0;
+  angular.module('sistemium.services').service('saSockets', ['$rootScope', '$q', saSockets]);
 
-  var jsDataPrefix = void 0;
+  function saSockets($rootScope, $q) {
 
-  function init(app) {
-    socket = window.io(app.url.socket, {
-      path: '/socket.io-client'
-    });
-    jsDataPrefix = app.jsDataPrefix || '';
-  }
+    var socket = void 0;
 
-  function wrappedOn(eventName, callback) {
-    var wrappedCallback = function wrappedCallback() {
-      var args = arguments;
-      $rootScope.$apply(function () {
-        callback.apply(socket, args);
+    var jsDataPrefix = void 0;
+
+    function init(app) {
+      socket = window.io(app.url.socket, {
+        path: '/socket.io-client'
       });
-    };
-    socket.on(eventName, wrappedCallback);
-    if (eventName === 'connect' && socket.connected) {
-      callback.apply(socket);
+      jsDataPrefix = app.jsDataPrefix || '';
     }
-    return function unSubscribe() {
-      socket.removeListener(eventName, wrappedCallback);
-    };
-  }
 
-  function emit(eventName, data, callback) {
+    function wrappedOn(eventName, callback) {
 
-    if (angular.isFunction(data) && !callback) {
-      if (!socket.connected) {
-        return data.apply(socket, [{
-          error: 'Нет подключения к серверу'
-        }]);
+      function wrappedCallback() {
+
+        var args = arguments;
+
+        $rootScope.$apply(function () {
+          callback.apply(socket, args);
+        });
       }
-      socket.emit(eventName, function () {
-        var args = arguments;
-        $rootScope.$apply(function () {
-          if (data) {
-            data.apply(socket, args);
-          }
+
+      socket.on(eventName, wrappedCallback);
+
+      if (eventName === 'connect' && socket.connected) {
+        callback.apply(socket);
+      }
+
+      return function unSubscribe() {
+        socket.removeListener(eventName, wrappedCallback);
+      };
+    }
+
+    function emit(eventName, data, callback) {
+
+      if (angular.isFunction(data) && !callback) {
+
+        if (!socket.connected) {
+          return data.apply(socket, [{
+            error: 'Нет подключения к серверу'
+          }]);
+        }
+
+        socket.emit(eventName, function () {
+
+          var args = arguments;
+
+          $rootScope.$apply(function () {
+            if (data) {
+              data.apply(socket, args);
+            }
+          });
         });
-      });
-    } else {
-      // if (!socket.connected) {
-      //   return callback && callback.apply(socket, [{
-      //     error: 'Нет подключения к серверу'
-      //   }]);
-      // }
-      socket.emit(eventName, data, function () {
-        var args = arguments;
-        $rootScope.$apply(function () {
-          if (callback) {
-            callback.apply(socket, args);
+      } else {
+
+        // if (!socket.connected) {
+        //   return callback && callback.apply(socket, [{
+        //     error: 'Нет подключения к серверу'
+        //   }]);
+        // }
+
+        socket.emit(eventName, data, function () {
+
+          var args = arguments;
+
+          $rootScope.$apply(function () {
+            if (callback) {
+              callback.apply(socket, args);
+            }
+          });
+        });
+      }
+    }
+
+    function emitQ(eventName, data) {
+
+      return $q(function (resolve, reject) {
+
+        emit(eventName, data, function (reply) {
+
+          if (!reply) {
+            resolve();
+          } else if (reply.data) {
+            resolve(reply.data);
+          } else if (reply.error) {
+            reject(reply);
           }
         });
       });
     }
-  }
 
-  function emitQ(eventName, data) {
+    var subscriptions = [];
 
-    return $q(function (resolve, reject) {
+    function onJsData(event, callback) {
 
-      emit(eventName, data, function (reply) {
+      return wrappedOn(event, function (msg) {
 
-        if (!reply) {
-          resolve();
-        } else if (reply.data) {
-          resolve(reply.data);
-        } else if (reply.error) {
-          reject(reply);
+        if (angular.isString(msg.resource)) {
+          msg.resource = msg.resource.replace(jsDataPrefix, '');
+        }
+
+        callback(msg);
+      });
+    }
+
+    function jsDataSubscribe(filter) {
+
+      var subscription = {
+        id: true,
+        originalFilter: filter,
+        filter: _.map(filter, function (f) {
+          return jsDataPrefix + f;
+        })
+      };
+
+      subscriptions.push(subscription);
+
+      emitQ('jsData:subscribe', subscription.filter).then(function (id) {
+        subscription.id = id;
+      });
+
+      return function () {
+        if (subscription.id) {
+          emit('jsData:unsubscribe', subscription.id);
+          subscriptions.splice(subscriptions.indexOf(subscription), 1);
+        }
+      };
+    }
+
+    $rootScope.$on('$destroy', $rootScope.$on('socket:authorized', function () {
+
+      _.each(subscriptions, function (subscription) {
+        if (subscription.id) {
+          emitQ('jsData:subscribe', subscription.filter).then(function (id) {
+            subscription.id = id;
+          });
         }
       });
-    });
-  }
+    }));
 
-  var subscriptions = [];
+    return {
 
-  function onJsData(event, callback) {
+      // io: socket,
 
-    return wrappedOn(event, function (msg) {
+      init: init,
+      emit: emit,
+      emitQ: emitQ,
+      on: wrappedOn,
 
-      if (angular.isString(msg.resource)) {
-        msg.resource = msg.resource.replace(jsDataPrefix, '');
+      jsDataSubscribe: jsDataSubscribe,
+      onJsData: onJsData,
+
+      removeAllListeners: function removeAllListeners() {
+        return socket.removeAllListeners();
+      },
+      removeListener: function removeListener(event, fn) {
+        return socket.removeListener(event, fn);
       }
 
-      callback(msg);
-    });
-  }
-
-  function jsDataSubscribe(filter) {
-
-    var subscription = {
-      id: true,
-      originalFilter: filter,
-      filter: _.map(filter, function (f) {
-        return jsDataPrefix + f;
-      })
-    };
-
-    subscriptions.push(subscription);
-
-    emitQ('jsData:subscribe', subscription.filter).then(function (id) {
-      subscription.id = id;
-    });
-
-    return function () {
-      if (subscription.id) {
-        emit('jsData:unsubscribe', subscription.id);
-        subscriptions.splice(subscriptions.indexOf(subscription), 1);
-      }
     };
   }
-
-  $rootScope.$on('$destroy', $rootScope.$on('socket:authorized', function () {
-
-    _.each(subscriptions, function (subscription) {
-      if (subscription.id) {
-        emitQ('jsData:subscribe', subscription.filter).then(function (id) {
-          subscription.id = id;
-        });
-      }
-    });
-  }));
-
-  return {
-
-    io: socket,
-
-    init: init,
-    emit: emit,
-    emitQ: emitQ,
-    on: wrappedOn,
-
-    jsDataSubscribe: jsDataSubscribe,
-    onJsData: onJsData,
-
-    removeAllListeners: function removeAllListeners() {
-      socket.removeAllListeners();
-    },
-
-    removeListener: function removeListener(event, fn) {
-      socket.removeListener(event, fn);
-    }
-
-  };
-}]);
+})();
 
 (function () {
 
