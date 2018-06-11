@@ -1049,33 +1049,27 @@
 
     function handler(name) {
 
-      if (messageHandlers && messageHandlers[name] && messageHandlers[name].postMessage) {
+      var handler = messageHandlers && messageHandlers[name];
 
-        return messageHandlers[name];
+      if (handler && handler.postMessage) {
+        return handler;
       }
 
-      if (messageHandlers[name]) {
+      if (handler) {
 
         return {
           postMessage: function postMessage(options) {
-
-            var jsonOptions = options ? JSON.stringify(options) : undefined;
-
-            messageHandlers[name](jsonOptions);
-          } };
+            handler(options ? JSON.stringify(options) : undefined);
+          }
+        };
       }
 
       return {
         postMessage: function postMessage(options) {
-
           if (name === 'roles') {
             $window[options.callback]([{
-              account: {
-                name: 'Error'
-              },
-              roles: {
-                picker: true
-              }
+              account: { name: 'Error' },
+              roles: { picker: true }
             }], options);
           } else {
             throw new Error('IOS handler undefined call to: "' + name + '"');

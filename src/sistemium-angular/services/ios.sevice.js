@@ -44,42 +44,35 @@
 
     function handler(name) {
 
-      if (messageHandlers && messageHandlers[name] && messageHandlers[name].postMessage){
+      const handler = messageHandlers && messageHandlers[name];
 
-        return messageHandlers[name];
-
+      if (handler && handler.postMessage) {
+        return handler;
       }
 
-      if (messageHandlers[name]){
+      if (handler) {
 
         return {
-          postMessage: function (options) {
-
-            let jsonOptions = options ? JSON.stringify(options) : undefined;
-
-            messageHandlers[name](jsonOptions)
-
-          }}
+          postMessage(options) {
+            handler(options ? JSON.stringify(options) : undefined);
+          }
+        }
 
       }
 
       return {
-        postMessage: function (options) {
 
+        postMessage(options) {
           if (name === 'roles') {
             $window[options.callback]([{
-              account: {
-                name: 'Error'
-              },
-              roles: {
-                picker: true
-              }
+              account: { name: 'Error' },
+              roles: { picker: true }
             }], options);
           } else {
             throw new Error(`IOS handler undefined call to: "${name}"`);
           }
-
         }
+
       };
 
     }
@@ -95,10 +88,10 @@
         const msg = _.assign({
           requestId,
           callback: CALLBACK,
-          options: {requestId}
+          options: { requestId }
         }, cfg);
 
-        messages[requestId] = {resolve: resolve, reject: reject, msg: msg};
+        messages[requestId] = { resolve: resolve, reject: reject, msg: msg };
 
         handler(handlerName).postMessage(msg);
 
@@ -106,7 +99,7 @@
           $timeout(cfg.timeout)
             .then(() => {
               delete messages[requestId];
-              reject({error: handlerName + ' request timeout'});
+              reject({ error: `${handlerName} request timeout` });
             });
         }
 
@@ -122,7 +115,7 @@
         return;
       }
 
-      let {status} = req;
+      let { status } = req;
 
       if (!status) {
         status = _.isArray(res) ? 'resolve' : 'reject';
