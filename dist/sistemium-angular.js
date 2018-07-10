@@ -1049,17 +1049,17 @@
 
     function handler(name) {
 
-      var handler = messageHandlers && messageHandlers[name];
+      var namedHandler = messageHandlers && messageHandlers[name];
 
-      if (handler && handler.postMessage) {
-        return handler;
+      if (namedHandler && namedHandler.postMessage) {
+        return namedHandler;
       }
 
-      if (handler) {
+      if (namedHandler) {
 
         return {
           postMessage: function postMessage(options) {
-            handler(options ? JSON.stringify(options) : undefined);
+            namedHandler(options ? JSON.stringify(options) : undefined);
           }
         };
       }
