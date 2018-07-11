@@ -23,6 +23,168 @@
 
 (function () {
 
+  selectOnFocus.$inject = ["$window", "$timeout"];
+  function selectOnFocus($window, $timeout) {
+    return {
+
+      restrict: 'A',
+
+      link: function link(scope, element) {
+
+        var focused = false;
+
+        element.on('focus', function () {
+          var _this = this;
+
+          if (focused) {
+            return;
+          }
+
+          focused = true;
+
+          $timeout(100).then(function () {
+            if (!$window.getSelection().toString()) {
+              // Required for mobile Safari
+              _this.setSelectionRange(0, _this.value.length);
+            }
+          });
+        });
+
+        element.on('blur', function () {
+          focused = false;
+        });
+      }
+
+    };
+  }
+
+  angular.module('sistemium.directives').directive('selectOnFocus', selectOnFocus);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
+    return {
+      require: 'ngModel',
+      link: function link($scope, elem) {
+        var triggerFunc = function triggerFunc() {
+          var ctrl = elem.controller('ngModel'),
+              prev = ctrl.$modelValue || '';
+          if (prev) {
+            ctrl.$setViewValue('');
+            $timeout(function () {
+              ctrl.$setViewValue(prev);
+            });
+          } else {
+            ctrl.$setViewValue(' ');
+          }
+        };
+        elem.bind('click', triggerFunc);
+      }
+    };
+  }]);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saEnterKey', saEnterKeyDirective);
+
+  function saEnterKeyDirective() {
+
+    return function (scope, element, attrs) {
+
+      element.bind('keydown keypress', onKeyPress);
+
+      function onKeyPress($event) {
+
+        if ($event.which === 13) {
+
+          $event.preventDefault();
+          scope.$applyAsync(function () {
+            scope.$eval(attrs.saEnterKey, { $event: $event, $element: element[0] });
+          });
+        }
+      }
+    };
+  }
+})();
+
+(function () {
+
+  saAutoFocus.$inject = ["$timeout", "IOS"];
+  function saAutoFocus($timeout, IOS) {
+
+    var ios = IOS.isIos();
+
+    return {
+
+      restrict: 'A',
+
+      scope: {
+        saAutoFocus: '@'
+      },
+
+      link: function link(_scope, _element) {
+
+        var value = _scope.saAutoFocus;
+        var element = _element[0];
+
+        if (value === 'false' || ios) {
+          return;
+        }
+
+        $timeout(100).then(function () {
+          element.focus();
+          if (value === 'select') {
+            element.setSelectionRange(0, element.value.length);
+          }
+        });
+
+        if (_scope.saAutoFocus !== 'true') {
+          return;
+        }
+
+        _element.bind('blur', function () {
+          $timeout(100).then(function () {
+            return element.focus();
+          });
+        });
+      }
+    };
+  }
+
+  angular.module('sistemium.directives').directive('saAutoFocus', saAutoFocus);
+})();
+
+(function () {
+
+  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
+
+  function saAnimateOnChange($animate, $timeout) {
+
+    return {
+      restrict: 'A',
+      replace: true,
+      link: link
+    };
+
+    function link(scope, elem, attr) {
+      var cls = attr.changeClass;
+      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
+        if ((nv || 0) !== (ov || 0)) {
+          $animate.addClass(elem, cls).then(function () {
+            $timeout(function () {
+              $animate.removeClass(elem, cls);
+            });
+          });
+        }
+      });
+    }
+  }
+})();
+
+(function () {
+
   /**
    * The Util service is for thin, globally reusable, utility functions
    */
@@ -998,7 +1160,8 @@
     }
 
     return {
-      chunkSerial: chunkSerial
+      chunkSerial: chunkSerial,
+      series: asyncSeries
     };
   }
 
@@ -1393,168 +1556,6 @@
   }
 
   angular.module('sistemium.services').service('PhotoHelper', PhotoHelper);
-})();
-
-(function () {
-
-  selectOnFocus.$inject = ["$window", "$timeout"];
-  function selectOnFocus($window, $timeout) {
-    return {
-
-      restrict: 'A',
-
-      link: function link(scope, element) {
-
-        var focused = false;
-
-        element.on('focus', function () {
-          var _this = this;
-
-          if (focused) {
-            return;
-          }
-
-          focused = true;
-
-          $timeout(100).then(function () {
-            if (!$window.getSelection().toString()) {
-              // Required for mobile Safari
-              _this.setSelectionRange(0, _this.value.length);
-            }
-          });
-        });
-
-        element.on('blur', function () {
-          focused = false;
-        });
-      }
-
-    };
-  }
-
-  angular.module('sistemium.directives').directive('selectOnFocus', selectOnFocus);
-})();
-
-(function () {
-
-  angular.module('sistemium.directives').directive('saTypeaheadClickOpen', ['$timeout', function ($timeout) {
-    return {
-      require: 'ngModel',
-      link: function link($scope, elem) {
-        var triggerFunc = function triggerFunc() {
-          var ctrl = elem.controller('ngModel'),
-              prev = ctrl.$modelValue || '';
-          if (prev) {
-            ctrl.$setViewValue('');
-            $timeout(function () {
-              ctrl.$setViewValue(prev);
-            });
-          } else {
-            ctrl.$setViewValue(' ');
-          }
-        };
-        elem.bind('click', triggerFunc);
-      }
-    };
-  }]);
-})();
-
-(function () {
-
-  angular.module('sistemium.directives').directive('saEnterKey', saEnterKeyDirective);
-
-  function saEnterKeyDirective() {
-
-    return function (scope, element, attrs) {
-
-      element.bind('keydown keypress', onKeyPress);
-
-      function onKeyPress($event) {
-
-        if ($event.which === 13) {
-
-          $event.preventDefault();
-          scope.$applyAsync(function () {
-            scope.$eval(attrs.saEnterKey, { $event: $event, $element: element[0] });
-          });
-        }
-      }
-    };
-  }
-})();
-
-(function () {
-
-  saAutoFocus.$inject = ["$timeout", "IOS"];
-  function saAutoFocus($timeout, IOS) {
-
-    var ios = IOS.isIos();
-
-    return {
-
-      restrict: 'A',
-
-      scope: {
-        saAutoFocus: '@'
-      },
-
-      link: function link(_scope, _element) {
-
-        var value = _scope.saAutoFocus;
-        var element = _element[0];
-
-        if (value === 'false' || ios) {
-          return;
-        }
-
-        $timeout(100).then(function () {
-          element.focus();
-          if (value === 'select') {
-            element.setSelectionRange(0, element.value.length);
-          }
-        });
-
-        if (_scope.saAutoFocus !== 'true') {
-          return;
-        }
-
-        _element.bind('blur', function () {
-          $timeout(100).then(function () {
-            return element.focus();
-          });
-        });
-      }
-    };
-  }
-
-  angular.module('sistemium.directives').directive('saAutoFocus', saAutoFocus);
-})();
-
-(function () {
-
-  angular.module('sistemium.directives').directive('saAnimateOnChange', ['$animate', '$timeout', saAnimateOnChange]);
-
-  function saAnimateOnChange($animate, $timeout) {
-
-    return {
-      restrict: 'A',
-      replace: true,
-      link: link
-    };
-
-    function link(scope, elem, attr) {
-      var cls = attr.changeClass;
-      scope.$watch(attr.saAnimateOnChange, function (nv, ov) {
-        if ((nv || 0) !== (ov || 0)) {
-          $animate.addClass(elem, cls).then(function () {
-            $timeout(function () {
-              $animate.removeClass(elem, cls);
-            });
-          });
-        }
-      });
-    }
-  }
 })();
 
 (function () {
