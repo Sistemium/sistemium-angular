@@ -5,6 +5,7 @@
   function IOS($window, $q, $timeout) {
 
     const CHECKIN = 'checkin';
+    const OPEN_URL = 'openUrl';
     const CALLBACK = 'iosPhotoCallback';
     const deb = $window.debug('stg:IOS');
 
@@ -21,6 +22,10 @@
 
     function isIos() {
       return !!$window.webkit || !!$window.stmAndroid;
+    }
+
+    function isAndroid() {
+      return !!$window.stmAndroid;
     }
 
     function supportsPictures() {
@@ -196,9 +201,13 @@
       return message(CHECKIN, {
         accuracy: accuracy,
         data: data,
-        timeout: timeout || 20000
+        timeout: timeout || 30000
       });
 
+    }
+
+    function openUrl(url) {
+      return message(OPEN_URL, { url });
     }
 
     function getRoles() {
@@ -216,6 +225,7 @@
       supportsPictures,
       supportsPhotos,
       isIos,
+      isAndroid,
       handler,
       checkIn,
       takePhoto,
@@ -226,8 +236,9 @@
       loadImage,
       saveImage,
       copyToClipboard,
-
-      iosCallback
+      openUrl,
+      iosCallback,
+      message
 
     };
 

@@ -51,7 +51,8 @@
     }
 
     return {
-      chunkSerial: chunkSerial
+      chunkSerial: chunkSerial,
+      series: asyncSeries
     };
 
   }
